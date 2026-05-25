@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"next dev -p 3000\" \"wait-on http://localhost:3000 && start chrome http://localhost:3000\"",
+    "dev:no-open": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -18,8 +19,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^9.0.10"
   }
 }

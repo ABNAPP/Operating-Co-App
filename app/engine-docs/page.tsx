@@ -3,6 +3,8 @@ const docsPlaceholders = [
   "Engine Contracts placeholder",
   "Spec Coverage Tracker placeholder",
   "Build Status placeholder",
+  "Phase 2 Type System implemented",
+  "Phase 3 Firestore foundation implemented",
 ];
 
 export default function EngineDocsPage() {
@@ -33,6 +35,7 @@ export default function EngineDocsPage() {
         <p className="cardMeta">- engine-contracts.md</p>
         <p className="cardMeta">- spec-coverage-tracker.md</p>
         <p className="cardMeta">- build-phases.md</p>
+        <p className="cardMeta">- Type modules in `lib/types/*`</p>
       </div>
     </section>
   );

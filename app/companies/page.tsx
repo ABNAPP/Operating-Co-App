@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { mockCompanies } from "@/lib/mock-companies";
+import { getCompanies } from "@/lib/firestore/repositories/companiesRepository";
 
-export default function CompaniesPage() {
+export default async function CompaniesPage() {
+  const { data: companies, source } = await getCompanies();
+
   return (
     <section className="pageSection">
       <div>
         <h2 className="sectionHeading">Companies</h2>
         <p className="sectionSubheading">
-          Company cards and quick access to the Company Workspace.
+          Company cards and quick access to the Company Workspace. Data source:{" "}
+          {source === "firestore" ? "Firestore" : "Mock"}.
         </p>
       </div>
 
@@ -19,16 +22,21 @@ export default function CompaniesPage() {
           </p>
         </Link>
 
-        {mockCompanies.map((company) => (
+        {companies.map((company) => (
           <Link
-            key={company.cleanTicker}
-            href={`/companies/${company.cleanTicker}`}
+            key={company.identity.cleanTicker}
+            href={`/companies/${company.identity.cleanTicker}`}
             className="card"
           >
-            <h3 className="cardTitle">{company.companyName}</h3>
-            <p className="cardMeta">{company.fullTicker}</p>
-            <p className="cardMeta">Decision: {company.decisionStatus}</p>
-            <p className="cardMeta">Review: {company.reviewFlag}</p>
+            <h3 className="cardTitle">{company.identity.companyName}</h3>
+            <p className="cardMeta">{company.identity.fullTicker}</p>
+            <p className="cardMeta">
+              Sector: {company.identity.ismSector} / {company.identity.damodaranIndustrialBenchmark}
+            </p>
+            <p className="cardMeta">
+              Decision: {company.valuationResult.decisionResult.decisionStatus}
+            </p>
+            <p className="cardMeta">Review: {company.reviewSummary.worstSeverity}</p>
             <p className="cardMeta">Last Updated: {company.lastUpdated}</p>
           </Link>
         ))}

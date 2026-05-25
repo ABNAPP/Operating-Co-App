@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/daily-data-refresh",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}

@@ -19,10 +19,64 @@
 - [x] Add Settings page
 - [x] Add mock company records
 
-## Phase 2 - Planned Next
-- [ ] Company input forms and persistence layer
-- [ ] Historical/forecast data entry models
-- [ ] Global valuation engine contracts in TypeScript
-- [ ] Quality and decision pipeline scaffolding
-- [ ] Firebase/Firestore integration and access patterns
-- [ ] API adapters and server-side secret handling
+## Phase 2 - Data Model + Mock Data
+- [x] Company identity and ticker type model
+- [x] Currency type structure and review status
+- [x] Historical and forecast period structures
+- [x] Manual input interfaces
+- [x] Reference data placeholder interfaces
+- [x] Valuation result placeholder interfaces
+- [x] Review severity and category status model
+- [x] Dashboard output row type
+- [x] Rich mock company data aligned to new types
+- [x] UI pages updated to consume structured mock data
+
+## Phase 3 - Firestore Foundation
+- [x] Firebase client initialization scaffold (modular SDK only)
+- [x] Firestore collection constants
+- [x] Repository layer scaffold for companies, dashboard, reference data, build status
+- [x] Company persistence helper functions (`get`, `upsert`, `seed`)
+- [x] Dashboard row persistence helper functions (`get`, `upsert`, `seed`)
+- [x] Reference data summary + seed scaffold
+- [x] Firestore readiness/status utility
+- [x] Data Hub status section (config/client/mode placeholders)
+- [x] Development-only seed action in Settings
+- [x] Mock fallback preserved when Firestore is empty or unavailable
+- [x] No external API calls added
+- [x] No valuation math added
+
+## Phase 4A - Daily Refresh Architecture
+- [x] Added `CRON_SECRET` template variable in `.env.example`
+- [x] Added Vercel Cron config (`vercel.json`) for daily 06:00 UTC refresh
+- [x] Added secure cron route (`/api/cron/daily-data-refresh`) with Bearer secret check
+- [x] Added daily refresh orchestration service scaffold
+- [x] Added status/warnings/errors persistence fields for refresh tracking
+- [x] Preserved manual override precedence in selection structure
+- [x] Added Data Hub daily refresh status UI and riskfree/FX table placeholders
+- [x] Added Settings cron/refresh configuration status UI
+- [x] Kept manual refresh as support/dev action; no auto refresh on page load
+- [x] Corrected Riskfree model to decimal internal rates and valuation-currency mapping
+- [x] Added explicit Currency Map model and table
+- [x] Added explicit FX Pair model with from/to columns
+- [x] Added same-currency pair generation with selected rate fixed at 1
+- [x] Added separate idempotent seed actions for Riskfree, Currency Map, and FX Pairs
+
+## Phase 4B - Planned Next
+- [ ] Implement live FRED calls for Riskfree Rates (only source)
+- [ ] Implement FX provider priority chain:
+  - EODHD-1
+  - EODHD-2
+  - FMP
+  - Finnhub
+  - MarketStack
+  - Alpha Vantage-1
+  - Alpha Vantage-2
+  - Manual Override / Cache
+- [ ] Add provider-level retries/backoff/circuit-breaker behavior
+- [ ] Harden Firestore data validation model and migration strategy
+
+## Phase 5 - Planned Later
+- [ ] Form UX for company inputs and period editing
+- [ ] Server-side API adapter hardening and observability
+- [ ] Global valuation engine function skeletons (still no full math until approved)
+- [ ] Review rules evaluation scaffolding from severity model
