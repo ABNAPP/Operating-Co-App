@@ -60,6 +60,10 @@
 - [x] Added explicit FX Pair model with from/to columns
 - [x] Added same-currency pair generation with selected rate fixed at 1
 - [x] Added separate idempotent seed actions for Riskfree, Currency Map, and FX Pairs
+- [x] Refactored Data Hub main page into card-only hub navigation
+- [x] Moved detailed Riskfree/FX/Refresh content to dedicated Data Hub sub-pages
+- [x] Added dedicated placeholder detail pages for Damodaran, Country Risk/ERP, Sector Mapping, Beta Reference, and Forecast/Fade
+- [x] Added API Integrations detail page with configured yes/no display only
 
 ## Phase 4B - Planned Next
 - [ ] Implement live FRED calls for Riskfree Rates (only source)

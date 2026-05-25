@@ -66,6 +66,19 @@ Input -> Reference Data -> Global Valuation Engine -> Company-specific valuation
   - Generate/Seed FX Pairs from Currency Map
 - No live provider calls added; Phase 4B remains provider integration phase
 
+## Data Hub UX Refactor
+- `Data Hub` main route is now a card-based hub view with status summary and links.
+- Detailed data tables moved to dedicated routes:
+  - `/data-hub/riskfree-rates`
+  - `/data-hub/fx-rates`
+  - `/data-hub/damodaran-data`
+  - `/data-hub/country-risk-erp`
+  - `/data-hub/sector-industry-mapping`
+  - `/data-hub/beta-reference`
+  - `/data-hub/forecast-fade-rules`
+  - `/data-hub/api-integrations`
+  - `/data-hub/refresh-status`
+
 ## Not Yet Built
 - Full Firestore data governance and validation rules
 - API ingestion pipelines (FRED riskfree only, FX provider priority chain)

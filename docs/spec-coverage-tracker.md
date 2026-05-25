@@ -36,6 +36,11 @@
 | FX Pair from/to model completeness | Built (Phase 4A Correction) | Includes separate from/to columns and stable IDs |
 | Same-currency FX selected rate = 1 | Built (Phase 4A Correction) | Generated in seed helper and retained in selection logic |
 | Separate seeding actions | Built (Phase 4A Correction) | Riskfree, Currency Map, and FX Pairs are independently seedable |
+| Data Hub card-based navigation | Built (Phase 4A UX) | Main Data Hub is card-only with detail route links |
+| Riskfree detail route | Built (Phase 4A UX) | Table + valuation-currency explanation + seed action |
+| FX detail route | Built (Phase 4A UX) | Currency map + FX pair tables + separate seed actions |
+| Refresh status detail route | Built (Phase 4A UX) | Cron config and daily refresh status details |
+| API integrations detail route | Built (Phase 4A UX) | Provider order and configured yes/no only |
 | Riskfree refresh provider policy | Planned (Phase 4B) | FRED-only live provider execution |
 | FX refresh provider priority policy | Planned (Phase 4B) | EODHD-1 -> EODHD-2 -> FMP -> Finnhub -> MarketStack -> AV1 -> AV2 -> Manual/Cache |
 | Global valuation calculations | Not Started | Deferred to later phase |
