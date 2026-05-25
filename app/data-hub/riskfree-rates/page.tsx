@@ -9,6 +9,8 @@ import {
   getSelectedRiskfreeRate,
 } from "@/lib/data-hub/rateSelectors";
 
+export const dynamic = "force-dynamic";
+
 export default async function RiskfreeRatesPage() {
   const { data: riskfreeRows, source } = await getRiskfreeRates();
   const usdRiskfree = getRiskfreeRateForValuationCurrency("USD", riskfreeRows);
@@ -30,8 +32,9 @@ export default async function RiskfreeRatesPage() {
       <div>
         <h2 className="sectionHeading">Riskfree Rates</h2>
         <p className="sectionSubheading">
-          Riskfree data source mode: {source === "firestore" ? "Firestore" : "Mock"}.
-          Rates are stored internally as decimals and displayed as percentages.
+          Riskfree data source mode:{" "}
+          {source === "firestore" ? "Firestore / FRED refreshed" : "Mock fallback"}. Rates
+          are stored internally as decimals and displayed as percentages.
         </p>
       </div>
 
@@ -55,9 +58,19 @@ export default async function RiskfreeRatesPage() {
       </div>
 
       <div className="panel">
-        <h3 className="cardTitle">Phase 4B Refresh Note</h3>
+        <h3 className="cardTitle">Manual Server Refresh Endpoint</h3>
         <p className="cardMeta">
-          Live FRED refresh is not active yet. Phase 4A keeps scaffold-only refresh status.
+          Daily cron refresh now supports FRED riskfree updates server-side. For manual
+          refresh, use protected endpoint:
+          {" "}
+          <code>/api/data-hub/riskfree-rates/refresh</code> (POST + Bearer CRON_SECRET).
+        </p>
+        <p className="cardMeta">
+          No frontend secret injection is used. Manual override values remain authoritative.
+        </p>
+        <p className="cardMeta">
+          Live rows should show Source as FRED after successful refresh. Mock fallback appears
+          only when Firestore data is unavailable.
         </p>
         <form action={seedDefaultRiskfreeRatesAction} style={{ marginTop: "0.75rem" }}>
           <button type="submit" className="navLink">

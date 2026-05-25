@@ -92,6 +92,12 @@ export function buildFxPairRowsFromCurrencyMap(
         notes: sameCurrency
           ? "Same-currency pair fixed at 1."
           : "Awaiting Phase 4B provider refresh or manual override.",
+        requiredByCompany: false,
+        requiredByTickers: [],
+        purpose: sameCurrency ? "Same Currency" : "Reference Pair",
+        priority: sameCurrency ? 0 : 100,
+        providerAttemptCount: 0,
+        isInverseDerived: false,
       });
     }
   }

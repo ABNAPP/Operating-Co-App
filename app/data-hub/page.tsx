@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { getReferenceDataSummary } from "@/lib/firestore/repositories/referenceDataRepository";
+import { getCountryRiskErpImportStatus } from "@/lib/firestore/repositories/countryRiskErpRepository";
+import { getSectorIndustryMappingSummary } from "@/lib/firestore/repositories/sectorIndustryMappingRepository";
 import { getFirestoreStatusSummary } from "@/lib/firestore/status";
 
 export default async function DataHubPage() {
   const { data: referenceSummary, source } = await getReferenceDataSummary();
+  const countryRiskImportStatus = await getCountryRiskErpImportStatus();
+  const sectorSummary = await getSectorIndustryMappingSummary();
   const firestoreStatus = getFirestoreStatusSummary();
   const hubCards = [
     {
@@ -20,20 +24,21 @@ export default async function DataHubPage() {
     },
     {
       title: "Damodaran Data",
-      description: "Placeholder sections and metadata for benchmark datasets.",
+      description:
+        "Industry Data Vault and source register for Damodaran benchmark datasets and coverage readiness.",
       count: referenceSummary.damodaranData,
       href: "/data-hub/damodaran-data",
     },
     {
       title: "Country Risk / ERP",
-      description: "Country risk premium and ERP placeholder structure.",
-      count: 2,
+      description: `Rows imported: ${countryRiskImportStatus.data.rowsImported}, status: ${countryRiskImportStatus.data.status}, source date: ${countryRiskImportStatus.data.sourceUpdateDate}, imported: ${countryRiskImportStatus.data.importedLastUpdated ?? "Not imported"}.`,
+      count: countryRiskImportStatus.data.rowsImported,
       href: "/data-hub/country-risk-erp",
     },
     {
       title: "Sector / Industry Mapping",
-      description: "Internal sector mapping to Damodaran benchmark taxonomy.",
-      count: referenceSummary.sectorIndustryMapping,
+      description: `ISM sectors: ${sectorSummary.ismSectorCount}, mapping required: ${sectorSummary.mappingRequiredCount}, excluded/special review: ${sectorSummary.excludedSpecialReviewCount}, last updated: ${sectorSummary.importedLastUpdated ?? "Not seeded"}, status: ${sectorSummary.status}.`,
+      count: sectorSummary.mappingRowsCount,
       href: "/data-hub/sector-industry-mapping",
     },
     {

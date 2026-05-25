@@ -1,12 +1,7 @@
-import { getFirestoreDbSafe } from "@/lib/firebase/client";
-import {
-  getSelectedFxRate,
-  getSelectedRiskfreeRate,
-} from "@/lib/data-hub/rateSelectors";
+import { refreshRiskfreeRatesFromFred } from "@/lib/data-hub/riskfreeRefreshService";
+import { refreshFxRatesFromProviderPriority as refreshFxFromProviders } from "@/lib/data-hub/fxRefreshService";
 import {
   getDailyRefreshStatus,
-  getFxRates,
-  getRiskfreeRates,
   upsertDailyRefreshStatus,
 } from "@/lib/firestore/repositories/referenceDataRepository";
 import type { DailyRefreshStatus } from "@/lib/types";
@@ -29,65 +24,34 @@ export interface DailyRefreshSummary {
   errors: string[];
 }
 
-async function refreshRiskfreeRatesFromFred(): Promise<RefreshStepResult> {
-  const { data: riskfreeRows } = await getRiskfreeRates();
-
-  // Phase 4A: cache-first/idempotent structure only, no provider call yet.
-  for (const row of riskfreeRows) {
-    getSelectedRiskfreeRate(row);
-  }
-
-  return {
-    status: "Configured / Pending Phase 4B",
-    provider: "FRED (planned)",
-    warnings: ["No live FRED call executed in Phase 4A."],
-    errors: [],
-  };
-}
-
-async function refreshFxRatesFromProviderPriority(): Promise<RefreshStepResult> {
-  const { data: fxRows } = await getFxRates();
-
-  // Phase 4A: cache-first/idempotent structure only, no provider call yet.
-  for (const row of fxRows) {
-    getSelectedFxRate(row);
-  }
-
-  return {
-    status: "Configured / Pending Phase 4B",
-    provider:
-      "EODHD-1 > EODHD-2 > FMP > Finnhub > MarketStack > Alpha Vantage-1 > Alpha Vantage-2 > Manual Override/Cache (planned)",
-    warnings: ["No live FX provider call executed in Phase 4A."],
-    errors: [],
-  };
-}
-
 export async function runDailyDataRefresh(): Promise<DailyRefreshSummary> {
   const startedAt = new Date().toISOString();
   const warnings: string[] = [];
   const errors: string[] = [];
   const providersUsed: string[] = [];
 
-  if (!getFirestoreDbSafe()) {
-    const finishedAt = new Date().toISOString();
-    return {
-      success: false,
-      startedAt,
-      finishedAt,
-      riskfreeRefreshStatus: "Firestore Not Initialized",
-      fxRefreshStatus: "Firestore Not Initialized",
-      providersUsed: [],
-      warnings: ["Firestore client unavailable. Mock fallback remains active."],
-      errors: ["Daily refresh orchestration requires initialized Firestore client."],
-    };
-  }
+  const riskfreeRefresh = await refreshRiskfreeRatesFromFred();
+  const fxServiceSummary = await refreshFxFromProviders();
 
-  const [riskfreeResult, fxResult] = await Promise.all([
-    refreshRiskfreeRatesFromFred(),
-    refreshFxRatesFromProviderPriority(),
-  ]);
+  const riskfreeResult: RefreshStepResult = {
+    status: riskfreeRefresh.status,
+    provider: "FRED",
+    warnings: riskfreeRefresh.warnings,
+    errors: riskfreeRefresh.errors,
+  };
 
-  providersUsed.push(riskfreeResult.provider, fxResult.provider);
+  const fxResult: RefreshStepResult = {
+    status: fxServiceSummary.status,
+    provider:
+      fxServiceSummary.providersUsed.length > 0
+        ? fxServiceSummary.providersUsed.join(", ")
+        : "No provider succeeded",
+    warnings: fxServiceSummary.warnings,
+    errors: fxServiceSummary.errors,
+  };
+
+  providersUsed.push(riskfreeResult.provider);
+  providersUsed.push(...fxServiceSummary.providersUsed);
   warnings.push(...riskfreeResult.warnings, ...fxResult.warnings);
   errors.push(...riskfreeResult.errors, ...fxResult.errors);
 
@@ -108,10 +72,28 @@ export async function runDailyDataRefresh(): Promise<DailyRefreshSummary> {
       ? finishedAt
       : previousStatus.data.lastSuccessfulRefreshAt,
     source: "vercel-cron-daily",
-    status: success ? "Configured / Pending Phase 4B" : "Failed",
+    status: success
+      ? "Riskfree + FX Refreshed"
+      : "Daily Refresh Completed With Errors",
+    fxLastAttemptAt: fxServiceSummary.finishedAt,
+    fxLastSuccessfulRefreshAt: fxServiceSummary.lastSuccessfulRefresh ?? undefined,
+    fxProvidersUsed: fxServiceSummary.providersUsed,
+    fxWarnings: fxServiceSummary.warnings,
+    fxErrors: fxServiceSummary.errors,
+    fxProviderAttempts: fxServiceSummary.providerAttempts,
+    fxUpdatedCount: fxServiceSummary.updated,
+    fxSkippedCount: fxServiceSummary.skipped,
+    fxManualOverrideCount: fxServiceSummary.manualOverride,
+    fxSameCurrencyCount: fxServiceSummary.sameCurrency,
+    riskfreeLastAttemptAt: finishedAt,
+    riskfreeLastSuccessfulRefreshAt: riskfreeRefresh.lastSuccessfulRefresh ?? undefined,
   };
 
-  await upsertDailyRefreshStatus(statusDoc);
+  try {
+    await upsertDailyRefreshStatus(statusDoc);
+  } catch {
+    warnings.push("Could not persist daily refresh status document.");
+  }
 
   return {
     success,

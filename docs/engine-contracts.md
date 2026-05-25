@@ -62,6 +62,107 @@ Define interfaces and data contracts between input/reference data and planned va
 
 ## Current Boundary (Still Not Implemented)
 - No real valuation formulas
-- No Firebase Admin SDK usage
-- No live provider execution yet (implemented in Phase 4B)
+- No valuation engine runtime integration with refreshed riskfree values yet
 - No runtime review engine execution (types only)
+
+## Phase 4B-1 Coverage
+- Added FRED observations contract for riskfree refresh:
+  - server-only request
+  - latest valid numeric observation selection
+  - percent-to-decimal conversion
+- Added server-side Firestore write contract via Firebase Admin SDK
+- Added fallback contract when admin credentials are not configured:
+  - clear status response
+  - no crash behavior
+- Added protected manual refresh route contract for riskfree rows
+
+## Phase 4B-2 Coverage
+- Added server-only FX provider contract and chain resolution contract
+- Added sequential provider execution contract:
+  - one provider call at a time
+  - stop on first successful provider response
+- Added provider fallback contract:
+  - fail gracefully to next provider
+  - optional provider skip handling (MarketStack)
+- Added FX refresh summary contract:
+  - updated/skipped/manualOverride/sameCurrency counts
+  - providers used/failed
+  - provider attempts
+  - warning/error aggregation
+- Added refresh safety contract:
+  - configurable max provider-refreshed pairs per run
+- Added protected manual FX refresh route contract
+- Added required-pair contract from companies:
+  - trading -> valuation and valuation -> trading
+  - reporting -> valuation and valuation -> reporting
+- Added inverse-derivation contract for reverse/reference rows:
+  - reverse row may be derived as `1 / directRate`
+  - manual override rows are never overwritten by inverse derivation
+
+## Phase 4C-1 Coverage
+- Added Country Risk / ERP reference-data contracts:
+  - country ERP row contract
+  - regional ERP fallback row contract
+  - country-to-regional mapping contract
+  - regional group definition contract
+  - source-note and import-status contracts
+- Added source/import contract:
+  - protected manual import endpoint
+  - Damodaran XLSX parsing scaffold
+  - decimal internal storage for all percentage/rate values
+- Added usage-rule and formula-guide scaffolding contracts:
+  - revenue geography drives weighted ERP (future)
+  - valuation currency drives riskfree (separate from ERP)
+  - no WACC / Cost of Equity / valuation math execution in this phase
+- Added regional mapping/calc correction contracts:
+  - country-to-region mapping is many-to-many
+  - one country can belong to multiple regional groups
+  - regional ERP is calculated from active mapped countries only
+  - regional ERP is fallback/reference, not primary country ERP replacement
+
+## Phase 4C-2A Coverage
+- Added Damodaran Data Vault contracts:
+  - dataset register row contract
+  - industry master row contract
+  - dataset coverage row contract
+  - import summary contract
+- Added source-register metadata contract for each Damodaran dataset:
+  - source name
+  - source URL
+  - download URL
+  - source update date
+  - imported/last-updated
+  - status and notes
+- Added local import orchestration contract:
+  - parse local XLS/XLSX from `data/damodaran/raw/`
+  - detect industry-name columns robustly
+  - collect row counts and industry counts
+  - continue on missing files without crashing
+- Added readiness/quality contract outputs:
+  - generated industry master list
+  - generated core-coverage matrix
+  - stale detection (`>180 days`) on imported rows
+- Added protected manual refresh route contract:
+  - `POST /api/data-hub/damodaran-data/refresh`
+  - Bearer `CRON_SECRET` required
+- Explicit non-goals for this phase:
+  - no Sector / Industry Mapping logic implementation
+  - no valuation math (WACC, Cost of Equity, FCFF, Terminal Value, Bridge, Intrinsic Value)
+
+## Phase 4C-2B-1 Coverage
+- Added Sector / Industry Mapping foundation contracts:
+  - ISM-sector row contract (internal taxonomy + operating-co status)
+  - mapping row contract (blank/reviewable benchmark fields)
+  - mapping rules/status/validation value contracts
+  - readiness row contract
+- Added benchmark-validation contract against Damodaran Industry Master List:
+  - nonblank benchmark values require exact match
+  - normalized-only variants are warning/review signals
+  - blank benchmark values are allowed only under `Mapping Required` or `Excluded / Special Review`
+- Added seed contract for foundation generation:
+  - preserves user-edited rows by default
+  - reset behavior is explicit/optional
+  - no legacy Google Sheet mapping import as source-of-truth
+- Added explicit boundary contract:
+  - sector mapping does not directly set Intrinsic Value per Share
+  - no beta/WACC/FCFF valuation math execution in this phase

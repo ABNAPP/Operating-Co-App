@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCompanyByCleanTicker } from "@/lib/firestore/repositories/companiesRepository";
+import {
+  getActiveISMSectorRows,
+  getSectorIndustryMappingByISMSector,
+} from "@/lib/firestore/repositories/sectorIndustryMappingRepository";
 
 const workspaceSections = [
   "Snapshot",
@@ -19,10 +23,17 @@ export default async function CompanyWorkspacePage({
 }) {
   const { cleanTicker } = await params;
   const { data: company, source } = await getCompanyByCleanTicker(cleanTicker);
+  const activeSectors = await getActiveISMSectorRows();
 
   if (!company) {
     notFound();
   }
+
+  const selectedSector =
+    activeSectors.data.find((row) => row.ismSector === company.identity.ismSector)?.ismSector ?? "";
+  const selectedMapping = selectedSector
+    ? await getSectorIndustryMappingByISMSector(selectedSector)
+    : { data: null };
 
   return (
     <section className="pageSection">
@@ -69,6 +80,31 @@ export default async function CompanyWorkspacePage({
             Market cap: {company.marketInputs.marketCap.toLocaleString()}
           </p>
           <p className="cardMeta">Riskfree rate: {company.riskWaccInputs.riskfreeRate}</p>
+        </article>
+        <article className="card">
+          <h3 className="cardTitle">Sector Mapping Scaffold</h3>
+          <p className="cardMeta">
+            Foundation only. No beta/WACC/FCFF calculation is executed from this mapping in this
+            phase.
+          </p>
+          <label className="cardMeta" htmlFor="ism-sector-select">
+            ISM-sector
+          </label>
+          <select id="ism-sector-select" defaultValue={selectedSector} disabled>
+            <option value="">Select ISM-sector</option>
+            {activeSectors.data.map((sector) => (
+              <option key={sector.id} value={sector.ismSector}>
+                {sector.ismSector}
+              </option>
+            ))}
+          </select>
+          <p className="cardMeta" style={{ marginTop: "0.5rem" }}>
+            Damodaran Industrial Benchmark:{" "}
+            {selectedMapping.data?.primaryDamodaranIndustrialBenchmark ?? "Mapping Required"}
+          </p>
+          <p className="cardMeta">
+            Mapping Status: {selectedMapping.data?.status ?? "Not Ready / Mapping Required"}
+          </p>
         </article>
         <article className="card">
           <h3 className="cardTitle">Historical Data</h3>

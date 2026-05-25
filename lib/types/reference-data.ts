@@ -44,6 +44,20 @@ export interface FxPairRateRow {
   lastUpdated: string;
   status: string;
   notes: string;
+  requiredByCompany?: boolean;
+  requiredByTickers?: string[];
+  purpose?:
+    | "Current Price Conversion"
+    | "Reporting Currency Review"
+    | "Reverse / Reference Conversion"
+    | "Reference Pair"
+    | "Same Currency";
+  priority?: number;
+  lastProviderAttempted?: string;
+  providerAttemptCount?: number;
+  refreshSkippedReason?: string;
+  derivedFromPair?: string;
+  isInverseDerived?: boolean;
 }
 
 export interface CountryRiskErpData {
@@ -104,6 +118,18 @@ export interface DailyRefreshStatus {
   lastSuccessfulRefreshAt?: string;
   source: string;
   status: string;
+  fxLastAttemptAt?: string;
+  fxLastSuccessfulRefreshAt?: string;
+  fxProvidersUsed?: string[];
+  fxWarnings?: string[];
+  fxErrors?: string[];
+  fxProviderAttempts?: number;
+  fxUpdatedCount?: number;
+  fxSkippedCount?: number;
+  fxManualOverrideCount?: number;
+  fxSameCurrencyCount?: number;
+  riskfreeLastAttemptAt?: string;
+  riskfreeLastSuccessfulRefreshAt?: string;
 }
 
 export type RiskfreeRateConfig = RiskfreeRateRow;

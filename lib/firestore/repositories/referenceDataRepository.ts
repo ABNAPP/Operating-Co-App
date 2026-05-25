@@ -1,4 +1,8 @@
+import "server-only";
+import fs from "node:fs/promises";
+import path from "node:path";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { getFirestoreDbSafe } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firestore/collections";
 import { recordFirestoreReadAttempt } from "@/lib/firestore/status";
@@ -11,8 +15,9 @@ import {
   fxRateConfigs,
   mockDailyRefreshStatus,
   riskfreeRateConfigs,
-  sectorIndustryMappings,
 } from "@/lib/mock-reference-data";
+import { damodaranDatasetRegistry } from "@/lib/data-hub/damodaranDatasetRegistry";
+import { buildOfficialIsmSectorRows } from "@/lib/data-hub/sectorIndustryMappingFoundationService";
 import type {
   CurrencyCode,
   CurrencyMapRow,
@@ -28,6 +33,7 @@ import {
   getSelectedFxRate,
   getSelectedRiskfreeRate,
 } from "@/lib/data-hub/rateSelectors";
+import { ensureRequiredFxPairsForCompanies } from "@/lib/data-hub/requiredFxPairs";
 
 export interface ReferenceDataSummary {
   mode: "mock" | "firestore";
@@ -46,25 +52,89 @@ const mockSummary: ReferenceDataSummary = {
   riskfreeRates: riskfreeRateConfigs.length,
   currencyMap: currencyMapRows.length,
   fxRates: fxRateConfigs.length,
-  damodaranData: damodaranDataSections.length,
-  sectorIndustryMapping: sectorIndustryMappings.length,
+  damodaranData: damodaranDatasetRegistry.length,
+  sectorIndustryMapping: buildOfficialIsmSectorRows().length,
   betaReferenceData: betaReferenceData.length,
   forecastFadeRules: forecastFadeRules.length,
   apiProviderConfigs: apiProviderConfigs.length,
 };
 
 async function countCollection(path: string) {
+  const adminDb = getAdminDb();
+  if (isFirebaseAdminConfigured() && adminDb) {
+    try {
+      const countSnapshot = await withTimeout(adminDb.collection(path).count().get());
+      const count = countSnapshot.data().count;
+      if (typeof count === "number") {
+        return count;
+      }
+    } catch {
+      // continue to client fallback
+    }
+  }
+
   const db = getFirestoreDbSafe();
 
   if (!db) {
     return 0;
   }
 
-  const snapshot = await getDocs(collection(db, path));
+  const snapshot = await withTimeout(getDocs(collection(db, path)));
   return snapshot.size;
 }
 
 const DAILY_REFRESH_STATUS_DOC_ID = "daily-refresh-status";
+const FX_CACHE_DIR = path.join(process.cwd(), "data", "cache");
+const FX_CACHE_FILE_PATH = path.join(FX_CACHE_DIR, "fx-rates-cache.json");
+
+interface FxCacheState {
+  rows: FxPairRateRow[];
+  updatedAt: string;
+}
+
+let inMemoryFxCache: FxCacheState | null = null;
+const FIRESTORE_READ_TIMEOUT_MS = 2000;
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs = FIRESTORE_READ_TIMEOUT_MS): Promise<T> {
+  let timeoutHandle: NodeJS.Timeout | null = null;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timeoutHandle = setTimeout(() => reject(new Error("Timed out")), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+  }
+}
+
+async function readFxCache(): Promise<FxCacheState | null> {
+  if (inMemoryFxCache) {
+    return inMemoryFxCache;
+  }
+
+  try {
+    const content = await fs.readFile(FX_CACHE_FILE_PATH, "utf8");
+    const parsed = JSON.parse(content) as FxCacheState;
+    inMemoryFxCache = parsed;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+async function writeFxCache(rows: FxPairRateRow[]) {
+  const payload: FxCacheState = {
+    rows,
+    updatedAt: new Date().toISOString(),
+  };
+  await fs.mkdir(FX_CACHE_DIR, { recursive: true });
+  await fs.writeFile(FX_CACHE_FILE_PATH, JSON.stringify(payload), "utf8");
+  inMemoryFxCache = payload;
+}
 
 export async function getReferenceDataSummary(): Promise<RepositoryResult<ReferenceDataSummary>> {
   const db = getFirestoreDbSafe();
@@ -79,16 +149,36 @@ export async function getReferenceDataSummary(): Promise<RepositoryResult<Refere
   }
 
   try {
+    const [
+      riskfreeRates,
+      currencyMap,
+      fxRates,
+      damodaranData,
+      sectorIndustryMapping,
+      betaReferenceDataCount,
+      forecastFadeRulesCount,
+      apiProviderConfigsCount,
+    ] = await Promise.all([
+      countCollection(COLLECTIONS.riskfreeRates),
+      countCollection(COLLECTIONS.currencyMap),
+      countCollection(COLLECTIONS.fxRates),
+      countCollection(COLLECTIONS.damodaranDatasetRegister),
+      countCollection(COLLECTIONS.sectorIndustryMappings),
+      countCollection(COLLECTIONS.betaReferenceData),
+      countCollection(COLLECTIONS.forecastFadeRules),
+      countCollection(COLLECTIONS.apiProviderConfigs),
+    ]);
+
     const summary: ReferenceDataSummary = {
       mode: "firestore",
-      riskfreeRates: await countCollection(COLLECTIONS.riskfreeRates),
-      currencyMap: await countCollection(COLLECTIONS.currencyMap),
-      fxRates: await countCollection(COLLECTIONS.fxRates),
-      damodaranData: await countCollection(COLLECTIONS.damodaranData),
-      sectorIndustryMapping: await countCollection(COLLECTIONS.sectorIndustryMapping),
-      betaReferenceData: await countCollection(COLLECTIONS.betaReferenceData),
-      forecastFadeRules: await countCollection(COLLECTIONS.forecastFadeRules),
-      apiProviderConfigs: await countCollection(COLLECTIONS.apiProviderConfigs),
+      riskfreeRates,
+      currencyMap,
+      fxRates,
+      damodaranData,
+      sectorIndustryMapping,
+      betaReferenceData: betaReferenceDataCount,
+      forecastFadeRules: forecastFadeRulesCount,
+      apiProviderConfigs: apiProviderConfigsCount,
     };
 
     recordFirestoreReadAttempt(COLLECTIONS.referenceData, true, "Reference summary loaded.");
@@ -111,6 +201,23 @@ export async function getReferenceDataSummary(): Promise<RepositoryResult<Refere
 }
 
 export async function getRiskfreeRates(): Promise<RepositoryResult<RiskfreeRateRow[]>> {
+  const adminDb = getAdminDb();
+
+  if (isFirebaseAdminConfigured() && adminDb) {
+    try {
+      const snapshot = await withTimeout(adminDb.collection(COLLECTIONS.riskfreeRates).get());
+      const rows = snapshot.docs.map((item) => item.data() as RiskfreeRateRow);
+
+      if (rows.length > 0) {
+        return { data: rows, source: "firestore" };
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown admin riskfree read error.";
+      recordFirestoreReadAttempt(COLLECTIONS.riskfreeRates, false, message);
+    }
+  }
+
   const db = getFirestoreDbSafe();
 
   if (!db) {
@@ -118,7 +225,7 @@ export async function getRiskfreeRates(): Promise<RepositoryResult<RiskfreeRateR
   }
 
   try {
-    const snapshot = await getDocs(collection(db, COLLECTIONS.riskfreeRates));
+    const snapshot = await withTimeout(getDocs(collection(db, COLLECTIONS.riskfreeRates)));
     const rows = snapshot.docs.map((item) => item.data() as RiskfreeRateRow);
 
     if (rows.length === 0) {
@@ -136,22 +243,56 @@ export async function getRiskfreeRates(): Promise<RepositoryResult<RiskfreeRateR
 }
 
 export async function getFxRates(): Promise<RepositoryResult<FxPairRateRow[]>> {
+  const adminDb = getAdminDb();
+
+  if (isFirebaseAdminConfigured() && adminDb) {
+    try {
+      const snapshot = await withTimeout(adminDb.collection(COLLECTIONS.fxRates).get());
+      const rows = snapshot.docs.map((item) => item.data() as FxPairRateRow);
+
+      if (rows.length > 0) {
+        await writeFxCache(rows);
+        return { data: rows, source: "firestore" };
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown admin FX read error.";
+      recordFirestoreReadAttempt(COLLECTIONS.fxRates, false, message);
+    }
+  }
+
   const db = getFirestoreDbSafe();
 
   if (!db) {
+    const cache = await readFxCache();
+    if (cache?.rows?.length) {
+      return { data: cache.rows, source: "firestore", error: "Using local FX cache fallback." };
+    }
     return { data: fxRateConfigs, source: "mock", error: "Firestore not initialized." };
   }
 
   try {
-    const snapshot = await getDocs(collection(db, COLLECTIONS.fxRates));
+    const snapshot = await withTimeout(getDocs(collection(db, COLLECTIONS.fxRates)));
     const rows = snapshot.docs.map((item) => item.data() as FxPairRateRow);
 
     if (rows.length === 0) {
+      const cache = await readFxCache();
+      if (cache?.rows?.length) {
+        return { data: cache.rows, source: "firestore", error: "Using local FX cache fallback." };
+      }
       return { data: fxRateConfigs, source: "mock" };
     }
 
+    await writeFxCache(rows);
     return { data: rows, source: "firestore" };
   } catch (error) {
+    const cache = await readFxCache();
+    if (cache?.rows?.length) {
+      return {
+        data: cache.rows,
+        source: "firestore",
+        error: error instanceof Error ? `${error.message} (using local FX cache fallback)` : "Using local FX cache fallback.",
+      };
+    }
     return {
       data: fxRateConfigs,
       source: "mock",
@@ -222,6 +363,23 @@ export async function seedDefaultRiskfreeRates() {
 }
 
 export async function getCurrencyMap(): Promise<RepositoryResult<CurrencyMapRow[]>> {
+  const adminDb = getAdminDb();
+
+  if (isFirebaseAdminConfigured() && adminDb) {
+    try {
+      const snapshot = await withTimeout(adminDb.collection(COLLECTIONS.currencyMap).get());
+      const rows = snapshot.docs.map((item) => item.data() as CurrencyMapRow);
+
+      if (rows.length > 0) {
+        return { data: rows, source: "firestore" };
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown admin currency map read error.";
+      recordFirestoreReadAttempt(COLLECTIONS.currencyMap, false, message);
+    }
+  }
+
   const db = getFirestoreDbSafe();
 
   if (!db) {
@@ -229,7 +387,7 @@ export async function getCurrencyMap(): Promise<RepositoryResult<CurrencyMapRow[
   }
 
   try {
-    const snapshot = await getDocs(collection(db, COLLECTIONS.currencyMap));
+    const snapshot = await withTimeout(getDocs(collection(db, COLLECTIONS.currencyMap)));
     const rows = snapshot.docs.map((item) => item.data() as CurrencyMapRow);
 
     if (rows.length === 0) {
@@ -312,19 +470,25 @@ export async function upsertFxPairRate(
 ): Promise<{ ok: boolean; error?: string }> {
   const db = getFirestoreDbSafe();
 
-  if (!db) {
-    return { ok: false, error: "Firestore not initialized." };
-  }
-
   try {
     const normalizedRow: FxPairRateRow = {
       ...row,
       selectedFxRate: getSelectedFxRate(row),
       status: getFxStatus(row),
     };
-    await setDoc(doc(db, COLLECTIONS.fxRates, normalizedRow.id), normalizedRow, {
-      merge: true,
-    });
+    if (db) {
+      await setDoc(doc(db, COLLECTIONS.fxRates, normalizedRow.id), normalizedRow, {
+        merge: true,
+      });
+    }
+
+    const existingCache = await readFxCache();
+    const cacheMap = new Map<string, FxPairRateRow>(
+      (existingCache?.rows ?? []).map((item) => [item.id, item]),
+    );
+    cacheMap.set(normalizedRow.id, normalizedRow);
+    await writeFxCache(Array.from(cacheMap.values()));
+
     return { ok: true };
   } catch (error) {
     return {
@@ -343,11 +507,26 @@ export async function seedDefaultFxPairsFromCurrencyMap() {
 
   try {
     const { data: mapRows } = await getCurrencyMap();
+    const { data: existingRows } = await getFxPairRates();
+    const existingMap = new Map(existingRows.map((row) => [row.id, row]));
     const generatedRows = buildFxPairRowsFromCurrencyMap(mapRows);
     let seeded = 0;
 
     for (const row of generatedRows) {
-      await upsertFxPairRate(row);
+      const existing = existingMap.get(row.id);
+      const mergedRow: FxPairRateRow = existing
+        ? {
+            ...existing,
+            requiredByCompany: existing.requiredByCompany ?? row.requiredByCompany ?? false,
+            requiredByTickers: existing.requiredByTickers ?? row.requiredByTickers ?? [],
+            purpose: existing.purpose ?? row.purpose,
+            priority: existing.priority ?? row.priority,
+            providerAttemptCount: existing.providerAttemptCount ?? row.providerAttemptCount,
+            isInverseDerived: existing.isInverseDerived ?? row.isInverseDerived ?? false,
+          }
+        : row;
+
+      await upsertFxPairRate(mergedRow);
       seeded++;
     }
 
@@ -359,6 +538,10 @@ export async function seedDefaultFxPairsFromCurrencyMap() {
       error: error instanceof Error ? error.message : "Unknown FX pair seed error.",
     };
   }
+}
+
+export async function ensureFxPairsRequiredByCompanies() {
+  return ensureRequiredFxPairsForCompanies();
 }
 
 export async function getDailyRefreshStatus(): Promise<RepositoryResult<DailyRefreshStatus>> {
@@ -430,15 +613,6 @@ export async function seedMockReferenceData() {
       await setDoc(doc(db, COLLECTIONS.damodaranData, `${item.sectionName}-${index}`), item, {
         merge: true,
       });
-      seeded++;
-    }
-
-    for (const [index, item] of sectorIndustryMappings.entries()) {
-      await setDoc(
-        doc(db, COLLECTIONS.sectorIndustryMapping, `${item.internalIndustryName}-${index}`),
-        item,
-        { merge: true },
-      );
       seeded++;
     }
 

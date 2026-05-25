@@ -1,14 +1,21 @@
 import type {
   ApiProviderConfig,
   BetaReferenceData,
-  CountryRiskErpData,
+  CountryErpRow,
+  CountryRegionalGroupMapRow,
+  CountryRiskErpImportStatus,
+  CountryRiskErpSourceNote,
   CurrencyMapRow,
   DailyRefreshStatus,
   DamodaranDataSection,
+  ErpUsageRule,
   ForecastFadeRules,
   FxPairRateRow,
+  RegionalErpRow,
+  RegionalGroupDefinition,
   RiskfreeRateRow,
   SectorIndustryMapping,
+  WeightedErpFormulaGuide,
 } from "@/lib/types";
 import {
   buildFxPairRowsFromCurrencyMap,
@@ -328,24 +335,363 @@ for (const row of riskfreeRateConfigs) {
   row.status = getRiskfreeStatus(row);
 }
 
-export const countryRiskErpData: CountryRiskErpData[] = [
+export const countryErpRows: CountryErpRow[] = [
   {
-    country: "United States",
+    id: "country_United_States",
+    countryName: "United States",
     countryCode: "US",
-    sovereignRating: "AA+",
+    moodysRating: "Aaa",
+    adjustedDefaultSpread: 0,
     countryRiskPremium: 0,
-    equityRiskPremium: 4.7,
-    asOfDate: "2026-05-24",
+    totalEquityRiskPremium: 0.047,
+    corporateTaxRate: 0.21,
+    sovereignCds: null,
+    erpBasedOnSovereignCds: null,
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "OK",
+    notes: "Mature market reference ERP anchor.",
   },
   {
-    country: "Sweden",
+    id: "country_Sweden",
+    countryName: "Sweden",
     countryCode: "SE",
-    sovereignRating: "AAA",
-    countryRiskPremium: 0.35,
-    equityRiskPremium: 5.05,
-    asOfDate: "2026-05-24",
+    moodysRating: "Aaa",
+    adjustedDefaultSpread: 0.0023,
+    countryRiskPremium: 0.0029,
+    totalEquityRiskPremium: 0.0499,
+    corporateTaxRate: 0.206,
+    sovereignCds: null,
+    erpBasedOnSovereignCds: null,
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "OK",
+    notes: "Country-level ERP row.",
+  },
+  {
+    id: "country_Germany",
+    countryName: "Germany",
+    countryCode: "DE",
+    moodysRating: "Aaa",
+    adjustedDefaultSpread: 0.002,
+    countryRiskPremium: 0.0025,
+    totalEquityRiskPremium: 0.0495,
+    corporateTaxRate: 0.30,
+    sovereignCds: null,
+    erpBasedOnSovereignCds: null,
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "OK",
+    notes: "Core proxy for euro area references if needed.",
+  },
+  {
+    id: "country_United_Kingdom",
+    countryName: "United Kingdom",
+    countryCode: "GB",
+    moodysRating: "Aa3",
+    adjustedDefaultSpread: 0.0028,
+    countryRiskPremium: 0.0032,
+    totalEquityRiskPremium: 0.0502,
+    corporateTaxRate: 0.25,
+    sovereignCds: null,
+    erpBasedOnSovereignCds: null,
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "OK",
+    notes: "Core country row.",
+  },
+  {
+    id: "country_Canada",
+    countryName: "Canada",
+    countryCode: "CA",
+    moodysRating: "Aaa",
+    adjustedDefaultSpread: 0.0021,
+    countryRiskPremium: 0.0026,
+    totalEquityRiskPremium: 0.0496,
+    corporateTaxRate: 0.265,
+    sovereignCds: null,
+    erpBasedOnSovereignCds: null,
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "OK",
+    notes: "Core country row.",
+  },
+  {
+    id: "country_Australia",
+    countryName: "Australia",
+    countryCode: "AU",
+    moodysRating: "Aaa",
+    adjustedDefaultSpread: 0.0024,
+    countryRiskPremium: 0.0029,
+    totalEquityRiskPremium: 0.0499,
+    corporateTaxRate: 0.30,
+    sovereignCds: null,
+    erpBasedOnSovereignCds: null,
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "OK",
+    notes: "Core country row.",
+  },
+  {
+    id: "country_Japan",
+    countryName: "Japan",
+    countryCode: "JP",
+    moodysRating: "A1",
+    adjustedDefaultSpread: 0.0031,
+    countryRiskPremium: 0.0035,
+    totalEquityRiskPremium: 0.0505,
+    corporateTaxRate: 0.30,
+    sovereignCds: null,
+    erpBasedOnSovereignCds: null,
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "OK",
+    notes: "Core country row.",
+  },
+  {
+    id: "country_Switzerland",
+    countryName: "Switzerland",
+    countryCode: "CH",
+    moodysRating: "Aaa",
+    adjustedDefaultSpread: 0.0022,
+    countryRiskPremium: 0.0027,
+    totalEquityRiskPremium: 0.0497,
+    corporateTaxRate: 0.149,
+    sovereignCds: null,
+    erpBasedOnSovereignCds: null,
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "OK",
+    notes: "Core country row.",
+  },
+  {
+    id: "country_Denmark",
+    countryName: "Denmark",
+    countryCode: "DK",
+    moodysRating: "Aaa",
+    adjustedDefaultSpread: 0.0024,
+    countryRiskPremium: 0.0028,
+    totalEquityRiskPremium: 0.0498,
+    corporateTaxRate: 0.22,
+    sovereignCds: null,
+    erpBasedOnSovereignCds: null,
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "OK",
+    notes: "Core country row.",
+  },
+  {
+    id: "country_Norway",
+    countryName: "Norway",
+    countryCode: "NO",
+    moodysRating: "Aaa",
+    adjustedDefaultSpread: 0.0025,
+    countryRiskPremium: 0.003,
+    totalEquityRiskPremium: 0.05,
+    corporateTaxRate: 0.22,
+    sovereignCds: null,
+    erpBasedOnSovereignCds: null,
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "OK",
+    notes: "Core country row.",
   },
 ];
+
+export const regionalGroupDefinitions: RegionalGroupDefinition[] = [
+  { id: "regiondef_north_america", regionalGroup: "North America", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 2, active: true, status: "OK", notes: "Fallback/reference group." },
+  { id: "regiondef_western_europe", regionalGroup: "Western Europe", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 3, active: true, status: "OK", notes: "Fallback/reference group." },
+  { id: "regiondef_emerging_markets", regionalGroup: "Emerging Markets", regionType: "Market Class", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 5, active: true, status: "Review", notes: "Coverage may vary by import snapshot." },
+  { id: "regiondef_global", regionalGroup: "Global", regionType: "Global", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 5, active: true, status: "OK", notes: "Reference-only global fallback." },
+  { id: "regiondef_emea", regionalGroup: "EMEA", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 3, active: true, status: "OK", notes: "" },
+  { id: "regiondef_africa", regionalGroup: "Africa", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 2, active: true, status: "Review", notes: "Needs broader mapped coverage." },
+  { id: "regiondef_asia_pacific", regionalGroup: "Asia-Pacific", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 3, active: true, status: "OK", notes: "" },
+  { id: "regiondef_oceania", regionalGroup: "Oceania", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 2, active: true, status: "Review", notes: "Depends on Australia/NZ coverage." },
+  { id: "regiondef_asia", regionalGroup: "Asia", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 3, active: true, status: "OK", notes: "" },
+  { id: "regiondef_middle_east", regionalGroup: "Middle East", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 2, active: true, status: "Review", notes: "Coverage may vary." },
+  { id: "regiondef_south_america", regionalGroup: "South America", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 2, active: true, status: "Review", notes: "Coverage may vary." },
+  { id: "regiondef_australia_nz", regionalGroup: "Australia & NZ", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 2, active: true, status: "Review", notes: "Needs NZ row coverage." },
+  { id: "regiondef_central_america", regionalGroup: "Central America", regionType: "Region", defaultSourceMethod: "Country average", calculationMethod: "Arithmetic mean of mapped country rows", minimumCountryCount: 2, active: true, status: "Review", notes: "Coverage may vary." },
+];
+
+const defaultCountryRegionalMappings: Array<{
+  countryName: string;
+  countryCode: string;
+  regionalGroup: string;
+  regionType?: string;
+  status?: string;
+  notes?: string;
+}> = [
+  // Global mapping for core countries
+  { countryName: "United States", countryCode: "US", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "Sweden", countryCode: "SE", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "Germany", countryCode: "DE", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "United Kingdom", countryCode: "GB", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "Canada", countryCode: "CA", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "Australia", countryCode: "AU", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "Japan", countryCode: "JP", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "Switzerland", countryCode: "CH", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "Denmark", countryCode: "DK", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "Norway", countryCode: "NO", regionalGroup: "Global", regionType: "Global" },
+
+  // Japan
+  { countryName: "Japan", countryCode: "JP", regionalGroup: "Asia" },
+  { countryName: "Japan", countryCode: "JP", regionalGroup: "Asia-Pacific" },
+
+  // Sweden
+  { countryName: "Sweden", countryCode: "SE", regionalGroup: "Western Europe" },
+  { countryName: "Sweden", countryCode: "SE", regionalGroup: "EMEA" },
+
+  // Germany
+  { countryName: "Germany", countryCode: "DE", regionalGroup: "Western Europe" },
+  { countryName: "Germany", countryCode: "DE", regionalGroup: "EMEA" },
+
+  // United Kingdom
+  { countryName: "United Kingdom", countryCode: "GB", regionalGroup: "Western Europe" },
+  { countryName: "United Kingdom", countryCode: "GB", regionalGroup: "EMEA" },
+
+  // UAE
+  { countryName: "United Arab Emirates", countryCode: "AE", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "United Arab Emirates", countryCode: "AE", regionalGroup: "Asia" },
+  { countryName: "United Arab Emirates", countryCode: "AE", regionalGroup: "Asia-Pacific", status: "Review", notes: "Business/geographic classification can vary." },
+  { countryName: "United Arab Emirates", countryCode: "AE", regionalGroup: "EMEA" },
+  { countryName: "United Arab Emirates", countryCode: "AE", regionalGroup: "Middle East" },
+  { countryName: "United Arab Emirates", countryCode: "AE", regionalGroup: "Emerging Markets", regionType: "Market Class", status: "Review", notes: "Classification policy dependent." },
+
+  // Mexico
+  { countryName: "Mexico", countryCode: "MX", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "Mexico", countryCode: "MX", regionalGroup: "Central America", status: "Review", notes: "Geographic classification can vary." },
+  { countryName: "Mexico", countryCode: "MX", regionalGroup: "North America", status: "Review", notes: "Business reporting classification can vary." },
+  { countryName: "Mexico", countryCode: "MX", regionalGroup: "Emerging Markets", regionType: "Market Class" },
+
+  // Australia + NZ
+  { countryName: "Australia", countryCode: "AU", regionalGroup: "Oceania" },
+  { countryName: "Australia", countryCode: "AU", regionalGroup: "Asia-Pacific" },
+  { countryName: "Australia", countryCode: "AU", regionalGroup: "Australia & NZ" },
+  { countryName: "New Zealand", countryCode: "NZ", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "New Zealand", countryCode: "NZ", regionalGroup: "Oceania" },
+  { countryName: "New Zealand", countryCode: "NZ", regionalGroup: "Asia-Pacific" },
+  { countryName: "New Zealand", countryCode: "NZ", regionalGroup: "Australia & NZ" },
+
+  // Brazil
+  { countryName: "Brazil", countryCode: "BR", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "Brazil", countryCode: "BR", regionalGroup: "South America" },
+  { countryName: "Brazil", countryCode: "BR", regionalGroup: "Emerging Markets", regionType: "Market Class" },
+
+  // South Africa
+  { countryName: "South Africa", countryCode: "ZA", regionalGroup: "Global", regionType: "Global" },
+  { countryName: "South Africa", countryCode: "ZA", regionalGroup: "Africa" },
+  { countryName: "South Africa", countryCode: "ZA", regionalGroup: "EMEA" },
+  { countryName: "South Africa", countryCode: "ZA", regionalGroup: "Emerging Markets", regionType: "Market Class" },
+];
+
+export const countryRegionalGroupMapRows: CountryRegionalGroupMapRow[] =
+  defaultCountryRegionalMappings.map((row) => ({
+    id: `map_${row.countryCode}_${row.regionalGroup.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`,
+    countryName: row.countryName,
+    countryCode: row.countryCode,
+    regionalGroup: row.regionalGroup,
+    regionType: row.regionType ?? "Region",
+    active: true,
+    sourceMethod: "Seed default",
+    status: row.status ?? "OK",
+    notes: row.notes ?? "",
+  }));
+
+export const regionalErpRows: RegionalErpRow[] = [];
+
+export const countryRiskErpSourceNotes: CountryRiskErpSourceNote[] = [
+  {
+    id: "damodaran_country_erp_source",
+    sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+    sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+    downloadUrl: "https://www.stern.nyu.edu/~adamodar/pc/datasets/ctryprem.xlsx",
+    purpose: "Country ERP reference input for future weighted ERP",
+    updateFrequency: "Periodic manual update (not daily cron)",
+    importUpdateMethod: "Protected server-side import from XLSX",
+    sourceUpdateDate: "January 2026",
+    importedLastUpdated: null,
+    status: "Review",
+    notes: "Country rows are primary; regional rows are calculated fallback/reference.",
+  },
+];
+
+export const erpUsageRules: ErpUsageRule[] = [
+  {
+    id: "erp_rule_1",
+    ruleId: "ERP-001",
+    rule: "Revenue geography drives Weighted ERP.",
+    defaultBehavior: "Use country ERP for each revenue exposure row where available.",
+    reviewCondition: "If exposure does not sum to 100%, trigger ERP Review.",
+    notes: "Riskfree remains valuation-currency based and separate from ERP.",
+  },
+  {
+    id: "erp_rule_2",
+    ruleId: "ERP-002",
+    rule: "Use regional ERP only as fallback/reference.",
+    defaultBehavior: "Prefer country row over regional row.",
+    reviewCondition: "If only regional fallback is used for high exposure, require review.",
+    notes: "Regional ERP is calculated from country rows + mapping.",
+  },
+  {
+    id: "erp_rule_3",
+    ruleId: "ERP-003",
+    rule: "Manual override may be used for exceptional country cases.",
+    defaultBehavior: "Keep manual selection explicit and auditable.",
+    reviewCondition: "Manual override older than 180 days should be reviewed.",
+    notes: "No WACC or Cost of Equity math in Phase 4C-1.",
+  },
+];
+
+export const weightedErpFormulaGuideRows: WeightedErpFormulaGuide[] = [
+  {
+    id: "weighted_erp_formula_1",
+    formulaComponent: "Weighted ERP",
+    formulaLogic: "SUM(Revenue Weight × Country/Region ERP).",
+    notes: "Future Company Workspace input and Risk/WACC engine dependency.",
+  },
+  {
+    id: "weighted_erp_formula_2",
+    formulaComponent: "Coverage check",
+    formulaLogic: "Revenue weights should total 1.00 (100%).",
+    notes: "Missing exposure triggers ERP Review flag.",
+  },
+];
+
+export const mockCountryRiskErpImportStatus: CountryRiskErpImportStatus = {
+  id: "country-risk-erp-import-status",
+  sourceName: "Damodaran Country Default Spreads and Risk Premiums",
+  sourceUrl: "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ctryprem.html",
+  downloadUrl: "https://www.stern.nyu.edu/~adamodar/pc/datasets/ctryprem.xlsx",
+  sourceUpdateDate: "January 2026",
+  importedLastUpdated: null,
+  status: "Not Imported / Review",
+  stale: true,
+  rowsImported: 0,
+  rowsSkipped: 0,
+  warnings: ["Manual import required. Not part of daily cron."],
+  errors: [],
+};
 
 export const damodaranDataSections: DamodaranDataSection[] = [
   {

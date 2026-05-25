@@ -5,6 +5,7 @@ import {
   seedMockDashboardRows,
 } from "@/lib/firestore/repositories/dashboardRepository";
 import {
+  ensureFxPairsRequiredByCompanies,
   getDailyRefreshStatus,
   seedMockReferenceData,
 } from "@/lib/firestore/repositories/referenceDataRepository";
@@ -56,6 +57,19 @@ export default async function SettingsPage() {
     revalidatePath("/companies");
     revalidatePath("/company-workspace");
     revalidatePath("/data-hub");
+    revalidatePath("/settings");
+  }
+
+  async function ensureRequiredFxPairsAction() {
+    "use server";
+
+    if (process.env.NODE_ENV !== "development") {
+      return;
+    }
+
+    await ensureFxPairsRequiredByCompanies();
+    revalidatePath("/data-hub/fx-rates");
+    revalidatePath("/data-hub/refresh-status");
     revalidatePath("/settings");
   }
 
@@ -143,6 +157,19 @@ export default async function SettingsPage() {
           </form>
           <p className="cardMeta" style={{ marginTop: "0.5rem" }}>
             Daily auto-refresh runs via Vercel Cron, not via page loads.
+          </p>
+          <form action={ensureRequiredFxPairsAction} style={{ marginTop: "0.75rem" }}>
+            <button
+              type="submit"
+              disabled={!canSeed}
+              className="navLink"
+              aria-disabled={!canSeed}
+            >
+              Ensure Required FX Pairs from Companies
+            </button>
+          </form>
+          <p className="cardMeta" style={{ marginTop: "0.5rem" }}>
+            Ensures bidirectional company-required FX rows without triggering provider API calls.
           </p>
         </article>
       </div>
