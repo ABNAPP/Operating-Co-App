@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/back-link";
 import { revalidatePath } from "next/cache";
 import {
   getRiskfreeRateByCurrency,
@@ -8,6 +9,7 @@ import {
   getRiskfreeRateForValuationCurrency,
   getSelectedRiskfreeRate,
 } from "@/lib/data-hub/rateSelectors";
+import { formatPercent } from "@/lib/utils/formatters";
 
 export const dynamic = "force-dynamic";
 
@@ -24,11 +26,9 @@ export default async function RiskfreeRatesPage() {
     revalidatePath("/data-hub");
   }
 
-  const formatPercent = (value: number | null) =>
-    value === null ? "N/A" : `${(value * 100).toFixed(2)}%`;
-
   return (
     <section className="pageSection">
+      <BackLink href="/data-hub" label="Back to Data Hub" />
       <div>
         <h2 className="sectionHeading">Riskfree Rates</h2>
         <p className="sectionSubheading">

@@ -2,7 +2,7 @@
 
 ## Purpose
 - Translate the "Operating Co Template — Master Specification v1.5" into a Next.js / React / TypeScript app foundation.
-- Current scope includes architecture, app shell, Phase 2 type/data model scaffolding, Phase 3 Firestore foundation, Phase 4A refresh scaffolding, Phase 4B-1 FRED riskfree refresh, Phase 4B-2 FX provider refresh, Phase 4C-1 Country Risk / ERP Data Hub module, Phase 4C-2A Damodaran Industry Data Vault / Source Register, Phase 4C-2B-1 Sector / Industry Mapping Foundation, Phase 4C-2B-2 Sector Mapping Candidate Logic, Phase 4C-2B-3 benchmark-first sector mapping correction, Phase 4C-2B-4 benchmark-first stage/cyclicality default recommendations, and Phase 4C-2B-5 Industry Benchmark Config v1.5 contract consolidation.
+- Current scope includes architecture, app shell, Phase 2 type/data model scaffolding, Phase 3 Firestore foundation, Phase 4A refresh scaffolding, Phase 4B-1 FRED riskfree refresh, Phase 4B-2 FX provider refresh, Phase 4C-1 Country Risk / ERP Data Hub module, Phase 4C-2A Damodaran Industry Data Vault / Source Register, Phase 4C-2B-1 Sector / Industry Mapping Foundation, Phase 4C-2B-2 Sector Mapping Candidate Logic, Phase 4C-2B-3 benchmark-first sector mapping correction, Phase 4C-2B-4 benchmark-first stage/cyclicality default recommendations, and Phase 4C-2B-5 Industry Benchmark Config v1.5 contract consolidation, and Phase 4C-2B-7 Damodaran v1.5 bridge alignment.
 - Excluded scope remains valuation math, external market-data API integrations, Google Sheets logic, and Apps Script.
 
 ## Core Product Concept
@@ -18,13 +18,20 @@ Input -> Reference Data -> Global Valuation Engine -> Company-specific valuation
 - Manual Override values always have priority over live values.
 - Industry Benchmark Config is benchmark-first: selected Damodaran benchmark is primary; ISM-sector is derived/display-only.
 
-## Main Areas
+## Global UI Formatting Standard
+- All new numeric UI uses `lib/utils/formatters.ts` (display layer only; no changes to stored/imported values or valuation math).
+- `formatNumber` for normal numbers (2 decimals); `formatPercent` for rates/margins/growth/ROC/ROIC/tax/WACC/ERP/spreads (2 decimals); `formatAmountMillions` for amounts in millions; `formatPerShare` for per-share values; `formatFxRate` for FX (4 decimals).
+- Do not format IDs, tickers, dataset IDs, FRED series IDs, dates, statuses, row counts, or text labels.
+- Damodaran raw tables and future Data Hub tables: `formatTableCell` / `FormattedTableCell` for generic numeric cells; `formatColumnHeader` for amount headers (`Revenue (m)`, `Market Cap (m)`, `USDm` when currency is known).
+
+## Main Areas (top navigation)
 - Dashboard (table view of official/support outputs)
-- Companies (card view + create company action)
-- Company Workspace (full company analysis shell)
+- Companies (card view + create company action; company cards open `/companies/[cleanTicker]` Company Workspace)
 - Data Hub (shared reference data and API status)
 - Engine Docs (traceability and build status)
-- Settings (environment and configuration scaffolding)
+- Settings (environment and configuration scaffolding; includes Flowchart card → `/engine-docs/flowchart`)
+
+Company Workspace is the per-company shell at `/companies/[cleanTicker]` (not a separate top-nav tab). Legacy `/company-workspace` redirects to `/companies`.
 
 ## Phase 2 Additions (Type/Data Model Only)
 - Company identity and ticker model (`CompanyIdentity`, `FullTicker`, `CleanTicker`, `Exchange`)
@@ -265,6 +272,83 @@ Input -> Reference Data -> Global Valuation Engine -> Company-specific valuation
 - Generated/candidate mappings are retained only as collapsed internal helper data and are not source of truth.
 - ISM display map remains display-only and explicitly does not drive valuation engines.
 - Pull keys come from `tblBenchmarkDataPullKeys`.
+
+## Phase 4C-2B-7 Additions (Damodaran v1.5 Bridge)
+- Damodaran Data cards show v1.5 workbook table names and classification badges.
+- Readiness uses `blocksCoreReadiness` (engine-support datasets only); pricing sanity datasets are excluded.
+- `histgrGlobal.xls` promoted to Core Support; Total Beta registered as Strong Support; EV multiples marked Missing / Deferred until raw file is added.
+- Industry Benchmark Config linkage panel shows pull-key resolver summary and universe cross-check counts.
+- Pull-key resolver statically maps key types to dataset IDs without fetching numeric engine values.
+- ISM-sector is not used in Damodaran Data vault logic.
+
+## Phase 4C-2B-8 Additions (Settings Flowchart)
+- Settings includes a clickable **Flowchart** card linking to `/engine-docs/flowchart`.
+- Flowchart page is documentation/navigation only; it does not execute valuation logic or engines.
+- Build phase labels and statuses are maintained in `lib/build-flow/buildPhases.ts`.
+
+## Phase 4C-2B-10 Additions (Beta Relevering & Selected Beta Policy)
+- Beta Engine now includes reference lookup plus beta-only relevering / selected beta policy.
+- `computeBetaPolicy` uses Damodaran unlevered beta + company D/E and tax when provided.
+- Does not calculate Cost of Equity, WACC, FCFF, terminal value, bridge, or intrinsic value.
+- Manual override and missing capital-structure inputs return Review — not fake final WACC beta.
+- ISM-sector is not used for beta selection.
+
+## Phase 4C-2B-11 Additions (WACC Engine Foundation)
+- WACC Foundation calculates Cost of Equity and preliminary WACC from Beta Policy selected beta, valuation-currency riskfree, country-of-risk ERP, and explicit scaffold inputs.
+- `lib/engines/wacc/waccService.ts` and `lib/engines/wacc/waccMath.ts`; types in `lib/types/wacc-engine.ts`.
+- Company Workspace WACC Foundation card; Engine Docs at `/engine-docs/wacc-engine`.
+- Not connected to FCFF, terminal value, intrinsic value, or Dashboard decision logic. Synthetic rating cost of debt and revenue-weighted ERP remain pending.
+
+## Phase 4C-2B-12 Additions (Forecast & Fade Engine Foundation)
+- Forecast & Fade Foundation recommends stage type, forecast/history years, and fade readiness from Industry Benchmark Config (benchmark-first).
+- `lib/engines/forecast-fade/forecastFadeService.ts` and `forecastFadeRules.ts`; types in `lib/types/forecast-fade-engine.ts`.
+- Company Workspace Forecast & Fade Foundation card; Engine Docs at `/engine-docs/forecast-fade-engine`.
+- Does not calculate revenue, margins, reinvestment, FCFF, terminal value, or intrinsic value. ISM-sector is display-only.
+
+## Phase 4C-2B-13 Additions (Reinvestment / FCFF Engine Foundation)
+- Reinvestment / FCFF Foundation calculates NOPAT, reinvestment and FCFF from company operating inputs (benchmark-first review context only).
+- `lib/engines/reinvestment-fcff/reinvestmentFcffService.ts` and `reinvestmentFcffMath.ts`; types in `lib/types/reinvestment-fcff-engine.ts`.
+- Company Workspace Reinvestment / FCFF Foundation card; Engine Docs at `/engine-docs/reinvestment-fcff-engine`.
+- Does not calculate terminal value, DCF/PV, firm-to-equity bridge, intrinsic value, or Dashboard decisions. ISM-sector is display-only.
+
+## Phase 4C-2B-14 Additions (Terminal Value Engine Foundation)
+- Terminal Value Foundation calculates Terminal FCFF and Gordon terminal value only (no discounting; no DCF/PV; not connected to bridge/intrinsic value or Dashboard decisions).
+- `lib/engines/terminal-value/terminalValueMath.ts` and `lib/engines/terminal-value/terminalValueService.ts`; types in `lib/types/terminal-value-engine.ts`.
+- Company Workspace Terminal Value Foundation card; Engine Docs at `/engine-docs/terminal-value-engine`.
+- Method support: Gordon Growth is the only implemented foundation method; Exit Multiple / Hybrid are treated as review-only / not implemented for this phase.
+- ISM-sector is display-only and must not drive terminal value logic.
+
+## Phase 4C-2B-15 Additions (DCF / PV Engine Foundation)
+- DCF/PV foundation calculates PV of forecast FCFF, PV of terminal value, and Value of Operating Assets only.
+- `lib/engines/dcf-pv/dcfPvMath.ts` and `lib/engines/dcf-pv/dcfPvService.ts`; types in `lib/types/dcf-pv-engine.ts`.
+- Company Workspace DCF / PV Foundation card; Engine Docs at `/engine-docs/dcf-pv-engine`.
+- DCF/PV is foundation-only — not an official valuation output yet; it does not calculate firm-to-equity bridge, equity value, intrinsic value per share, or Dashboard decisions.
+- ISM-sector is display-only and must not drive DCF/PV logic.
+
+## Phase 4C-2B-16 Additions (Firm-to-Equity Bridge Engine Foundation)
+- Firm-to-Equity Bridge foundation calculates Equity Value from Value of Operating Assets and explicit bridge adjustments only.
+- `lib/engines/equity-bridge/equityBridgeMath.ts` and `lib/engines/equity-bridge/equityBridgeService.ts`; types in `lib/types/equity-bridge-engine.ts`.
+- Company Workspace Firm-to-Equity Bridge Foundation card; Engine Docs at `/engine-docs/equity-bridge-engine`.
+- Bridge is foundation-only — it does not calculate intrinsic value per share, MOS, entry price, or Dashboard decisions.
+- Total Debt uses gross debt plus lease liabilities (not net debt); optional claims default to zero only when documented in scaffold notes.
+- ISM-sector is display-only and must not drive bridge logic.
+
+## Phase 4C-2B-17 Additions (Intrinsic Value / Share Engine Foundation)
+- Intrinsic Value / Share foundation calculates per-share value from Equity Value and explicit share-count scaffold only.
+- `lib/engines/intrinsic-value/intrinsicValueMath.ts` and `lib/engines/intrinsic-value/intrinsicValueService.ts`; types in `lib/types/intrinsic-value-engine.ts`.
+- Company Workspace Intrinsic Value / Share Foundation card; Engine Docs at `/engine-docs/intrinsic-value-engine`.
+- Share unit must be explicitly `millions` or `absolute` — no silent unit guessing.
+- Does not calculate MOS, entry price, buy/sell/hold, upside/downside, or Dashboard decisions.
+- ISM-sector is display-only and must not drive intrinsic value logic.
+
+## Phase 4C-2B-9 Additions (Beta Engine Foundation)
+- Beta Engine foundation is read-only reference lookup — not a valuation engine.
+- Flow: Selected Damodaran Industrial Benchmark → `betaTableKey` (`tblBenchmarkDataPullKeys`) → `damodaran_beta_global` row → Beta Reference / Readiness display.
+- Service: `lib/engines/beta/betaReferenceService.ts`; types: `lib/types/beta-engine.ts`.
+- Company Workspace shows Beta Reference card; Engine Docs at `/engine-docs/beta-engine`.
+- Uses benchmark-first industry anchor only — ISM-sector is not used for beta lookup.
+- Does not calculate Cost of Equity, WACC, relevering, FCFF, terminal value, bridge, or intrinsic value.
+- Future phase: company-specific relevering / selected beta policy (still before WACC engine).
 
 ## Not Yet Built
 - Full Firestore data governance and validation rules

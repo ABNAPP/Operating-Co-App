@@ -200,6 +200,102 @@
 - [x] Pull keys are shown from exact `tblBenchmarkDataPullKeys`
 - [x] No valuation math added in this phase
 
+## Phase 4C-2B-7 - Damodaran v1.5 Bridge (Registry, Classification & Pull-Key Alignment)
+- [x] Reclassified Damodaran datasets per v1.5 / Source Pack (Core Required, Core Support, Strong Support, Pricing Sanity Only)
+- [x] Pricing multiples no longer block Beta/WACC readiness (`blocksCoreReadiness` gate)
+- [x] Promoted `histgrGlobal.xls` to Core Support
+- [x] Registered Total Beta (`totalbetaGlobal (2).xls`) as Strong Support
+- [x] Added deferred EV multiples registry entry (`evdataGlobal.xls` missing)
+- [x] Added workbook semantic table names on cards (`tblDamodaranIndustryBeta`, etc.)
+- [x] Added static pull-key → dataset resolver (`lib/data-hub/damodaranPullKeyResolver.ts`)
+- [x] Added canonical vs v1.5 universe cross-check helper
+- [x] Fixed canonical core coverage keys (removed orphan `evdataGlobal` / pricing multiples from gating)
+- [x] Added Industry Benchmark Config linkage panel on Damodaran Data page
+- [x] Added structured ratings reference note on ratings detail page
+- [x] Replaced Sector Mapping readiness label with Industry Benchmark Config wording
+- [x] Confirmed no valuation math; Riskfree/FX/Country ERP untouched
+
+## Phase 4C-2B-8 - Pre-Beta/WACC Checkpoint + Settings Flowchart
+- [x] Pre-build checkpoint confirmed (Industry Benchmark Config, Damodaran bridge, Riskfree/FX/ERP, formatting standard)
+- [x] Settings Flowchart card (`/settings` → `/engine-docs/flowchart`)
+- [x] Flowchart page with build status, main app flow, Data Hub flow, rules, next step
+- [x] Static phase data in `lib/build-flow/buildPhases.ts` for easy updates
+- [x] Documentation/navigation only — no valuation logic
+
+## Phase 4C-2B-10 - Beta Engine Relevering & Selected Beta Policy
+- [x] Extended `lib/types/beta-engine.ts` with `BetaPolicyInput`, `BetaPolicyResult`, `BetaSelectionPolicy`
+- [x] Added `lib/engines/beta/betaPolicyMath.ts` and `betaPolicyService.ts` (relevering only)
+- [x] Formula: Relevered Beta = Unlevered × (1 + (1 − tax) × D/E) — no Cost of Equity or WACC
+- [x] Company Workspace Beta Policy / Selected Beta card
+- [x] Mock `betaPolicyInputs` on Microsoft (complete), Disney (tax only), Volvo (D/E + tax)
+- [x] Engine Docs relevering section; QA script `scripts/qa-beta-policy.mjs`
+- [x] ISM-sector not used for beta selection
+
+## Phase 4C-2B-9 - Beta Engine Foundation (Reference Lookup)
+- [x] Added `lib/types/beta-engine.ts` (`BetaReferenceRow`, `BetaLookupResult`, `BetaReadinessStatus`)
+- [x] Added read-only `lib/engines/beta/betaReferenceService.ts`
+- [x] Benchmark → `betaTableKey` (`tblBenchmarkDataPullKeys`) → `damodaran_beta_global` row lookup
+- [x] Flexible beta column detection (named headers + betaGlobal position fallback)
+- [x] Company Workspace Beta Reference / Beta Readiness card
+- [x] Engine Docs page `/engine-docs/beta-engine`
+- [x] Flowchart/build status updated — Beta Engine foundation in progress
+- [x] No WACC, Cost of Equity, relevering, FCFF, terminal, bridge, or intrinsic math
+- [x] ISM-sector not used for beta lookup (benchmark-first only)
+- [x] Riskfree / FX / Country ERP / Damodaran import / Industry Benchmark Config tables unchanged
+
+## Phase 4C-2B-11 - WACC Engine Foundation
+- [x] Added `lib/types/wacc-engine.ts`, `waccMath.ts`, `waccService.ts`, `scripts/qa-wacc-foundation.mjs`
+- [x] Cost of Equity and WACC calculated inside WACC foundation only — not official valuation output
+- [x] Company Workspace WACC Foundation card; Engine Docs `/engine-docs/wacc-engine`
+- [x] Valuation Engines status: WACC Engine Foundation; Forecast/FCFF/Terminal/Intrinsic not started
+- [x] Country-of-risk ERP with Review note (revenue-weighted ERP pending); no synthetic rating CoD
+- [x] No FCFF, Terminal Value, Intrinsic Value, or Dashboard decision logic from WACC
+
+## Phase 4C-2B-12 - Forecast & Fade Engine Foundation
+- [x] Added `lib/types/forecast-fade-engine.ts`, `forecastFadeRules.ts`, `forecastFadeService.ts`, `scripts/qa-forecast-fade-foundation.mjs`
+- [x] Stage/history/cyclicality and fade readiness from Industry Benchmark Config — no forecast or FCFF math
+- [x] Company Workspace Forecast & Fade Foundation card; Engine Docs `/engine-docs/forecast-fade-engine`
+- [x] Valuation Engines status: Forecast & Fade Foundation; Reinvestment/FCFF/Terminal/Intrinsic not started
+- [x] Benchmark-first only — ISM-sector display-only; not connected to Dashboard decisions
+
+## Phase 4C-2B-13 - Reinvestment / FCFF Engine Foundation
+- [x] Added `lib/types/reinvestment-fcff-engine.ts`, `reinvestmentFcffMath.ts`, `reinvestmentFcffService.ts`, `scripts/qa-reinvestment-fcff-foundation.mjs`
+- [x] NOPAT, Direct and Sales-to-Capital reinvestment, FCFF — no terminal, DCF/PV, bridge, or intrinsic math
+- [x] Company Workspace Reinvestment / FCFF Foundation card; Engine Docs `/engine-docs/reinvestment-fcff-engine`
+- [x] Valuation Engines status: Reinvestment / FCFF Foundation; Terminal/Bridge/Intrinsic not started
+- [x] Benchmark cyclical/high review notes only — ISM-sector display-only; not connected to Dashboard decisions
+
+## Phase 4C-2B-14 - Terminal Value Engine Foundation
+- [x] Added `lib/types/terminal-value-engine.ts`, `terminalValueMath.ts`, `terminalValueService.ts`, `scripts/qa-terminal-value-foundation.mjs`
+- [x] Terminal FCFF + Gordon terminal value foundation outputs (no discounting; no DCF/PV)
+- [x] Stable growth vs stable WACC guardrail (stable growth >= stable WACC => null terminal value)
+- [x] Company Workspace Terminal Value Foundation card; Engine Docs `/engine-docs/terminal-value-engine`
+- [x] Valuation Engines status: Terminal Value Engine Foundation; Firm-to-Equity Bridge / Intrinsic not started
+- [x] Method scope: Gordon Growth only for this phase; Exit Multiple / Hybrid treated as not implemented review notes
+
+## Phase 4C-2B-15 - DCF / PV Engine Foundation
+- [x] Added `lib/types/dcf-pv-engine.ts`, `dcfPvMath.ts`, `dcfPvService.ts`, `scripts/qa-dcf-pv-foundation.mjs`
+- [x] Discounting + PV of forecast FCFF foundation outputs (no multi-year forecast math in this phase)
+- [x] PV of terminal value and Value of Operating Assets calculated foundation-only (no discounting to equity bridge/intrinsic)
+- [x] Company Workspace DCF / PV Foundation card; Engine Docs `/engine-docs/dcf-pv-engine`
+- [x] Valuation Engines status: DCF / PV Engine Foundation; Firm-to-Equity Bridge / Intrinsic not started
+- [x] ISM-sector display-only; DCF/PV logic uses only WACC + terminal value + FCFF foundations
+
+## Phase 4C-2B-16 - Firm-to-Equity Bridge Engine Foundation
+- [x] Added `lib/types/equity-bridge-engine.ts`, `equityBridgeMath.ts`, `equityBridgeService.ts`, `scripts/qa-equity-bridge-foundation.mjs`
+- [x] Equity Value from Value of Operating Assets + explicit bridge adjustments (no intrinsic value per share)
+- [x] Total Debt = Gross Debt + Lease Liabilities (explicit gross debt; not net debt)
+- [x] Company Workspace Firm-to-Equity Bridge Foundation card; Engine Docs `/engine-docs/equity-bridge-engine`
+- [x] Valuation Engines status: Firm-to-Equity Bridge Foundation; Intrinsic Value / Share not started
+- [x] ISM-sector display-only; bridge logic uses DCF/PV operating assets + balance sheet bridge scaffold only
+
+## Phase 4C-2B-17 - Intrinsic Value / Share Engine Foundation
+- [x] Added `lib/types/intrinsic-value-engine.ts`, `intrinsicValueMath.ts`, `intrinsicValueService.ts`, `scripts/qa-intrinsic-value-foundation.mjs`
+- [x] Intrinsic Value / Share = Equity Value ÷ selected diluted shares (explicit share unit: millions | absolute)
+- [x] Company Workspace Intrinsic Value / Share Foundation card; Engine Docs `/engine-docs/intrinsic-value-engine`
+- [x] Valuation Engines status: Intrinsic Value / Share Foundation; MOS / Decision Layer not started
+- [x] No MOS, entry price, buy/sell/hold, or Dashboard decision wiring in this phase
+
 ## Phase 5 - Planned Later
 - [ ] Form UX for company inputs and period editing
 - [ ] Server-side API adapter hardening and observability

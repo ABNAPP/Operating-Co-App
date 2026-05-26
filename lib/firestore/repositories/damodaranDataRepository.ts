@@ -7,7 +7,7 @@ import {
   computeStaleImportStatus,
 } from "@/lib/data-hub/damodaranDataImportService";
 import { buildCanonicalDamodaranIndustryList } from "@/lib/data-hub/damodaranIndustryCanonicalService";
-import { damodaranDatasetRegistry } from "@/lib/data-hub/damodaranDatasetRegistry";
+import { damodaranDatasetRegistry, hydrateDamodaranRegisterRows } from "@/lib/data-hub/damodaranDatasetRegistry";
 import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { getFirestoreDbSafe } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firestore/collections";
@@ -165,7 +165,7 @@ export async function getDamodaranDatasetRegister(): Promise<
   const cache = await readDamodaranDataVaultCache();
   if (cache?.registerRows && cache.registerRows.length > 0) {
     return {
-      data: cache.registerRows
+      data: hydrateDamodaranRegisterRows(cache.registerRows)
         .map((row) => ({ ...row, importStatus: computeStaleImportStatus(row, now) }))
         .sort((a, b) => a.fileName.localeCompare(b.fileName)),
       source: "firestore",
@@ -183,7 +183,7 @@ export async function getDamodaranDatasetRegister(): Promise<
       : cache?.registerRows && cache.registerRows.length > 0
         ? cache.registerRows
         : result.data;
-  const rows = sourceRows
+  const rows = hydrateDamodaranRegisterRows(sourceRows)
     .map((row) => ({ ...row, importStatus: computeStaleImportStatus(row, now) }))
     .sort((a, b) => a.fileName.localeCompare(b.fileName));
 
@@ -673,7 +673,7 @@ export async function getDamodaranDataVaultSummary() {
   const register = await getDamodaranDatasetRegister();
   const importSummary = await getDamodaranImportSummary();
 
-  const coreRows = register.data.filter((row) => row.priority === "Core");
+  const coreRows = register.data.filter((row) => row.blocksCoreReadiness);
   const missingCoreDatasets = coreRows
     .filter((row) => row.importStatus !== "Imported")
     .map((row) => row.fileName);

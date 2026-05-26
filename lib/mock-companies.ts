@@ -245,6 +245,24 @@ export const mockCompanies: CompanyDataModel[] = [
       targetDebtToCapital: 0.18,
       marginalTaxRate: 0.17,
     },
+    betaPolicyInputs: {
+      marketDebtToEquity: 0.22,
+      selectedTaxRate: 0.17,
+    },
+    waccFoundationInputs: {
+      preTaxCostOfDebt: 0.038,
+      costOfDebtSource: "Mock / Foundation scaffold",
+      notes: "Scaffold pre-tax cost of debt for WACC foundation QA — not live company data.",
+    },
+    intrinsicValueFoundationInputs: {
+      selectedDilutedShares: 7427,
+      shareUnit: "millions",
+      selectedSharesSource: "LTM historical weighted average diluted shares (millions)",
+      currentSharePrice: 432.18,
+      priceCurrency: "USD",
+      fxRateToValuationCurrency: 1,
+      notes: "Mock / foundation scaffold share count — not live company data.",
+    },
     terminalValueInputs: {
       terminalGrowthRate: 0.024,
       terminalRoiOrRoic: 0.18,
@@ -631,6 +649,22 @@ export const mockCompanies: CompanyDataModel[] = [
       targetDebtToCapital: 0.34,
       marginalTaxRate: 0.21,
     },
+    betaPolicyInputs: {
+      selectedTaxRate: 0.21,
+    },
+    waccFoundationInputs: {
+      notes:
+        "Intentionally no pre-tax cost of debt scaffold — tests WACC Review/Missing without synthetic rating.",
+    },
+    intrinsicValueFoundationInputs: {
+      selectedDilutedShares: 1796,
+      shareUnit: "millions",
+      selectedSharesSource: "LTM historical weighted average diluted shares (millions)",
+      currentSharePrice: 118.4,
+      priceCurrency: "USD",
+      fxRateToValuationCurrency: 1,
+      notes: "Mock / foundation scaffold share count — not live company data.",
+    },
     terminalValueInputs: {
       terminalGrowthRate: 0.022,
       terminalRoiOrRoic: 0.1,
@@ -1015,6 +1049,24 @@ export const mockCompanies: CompanyDataModel[] = [
       preTaxCostOfDebt: 0.05,
       targetDebtToCapital: 0.36,
       marginalTaxRate: 0.21,
+    },
+    betaPolicyInputs: {
+      marketDebtToEquity: 0.45,
+      selectedTaxRate: 0.21,
+    },
+    waccFoundationInputs: {
+      preTaxCostOfDebt: 0.05,
+      costOfDebtSource: "Mock / Foundation scaffold",
+      notes: "Scaffold pre-tax cost of debt for SEK valuation-currency WACC foundation QA.",
+    },
+    intrinsicValueFoundationInputs: {
+      selectedDilutedShares: 2010,
+      shareUnit: "millions",
+      selectedSharesSource: "LTM historical weighted average diluted shares (millions)",
+      currentSharePrice: 276.4,
+      priceCurrency: "SEK",
+      fxRateToValuationCurrency: 1,
+      notes: "Mock / foundation scaffold share count — not live company data.",
     },
     terminalValueInputs: {
       terminalGrowthRate: 0.02,

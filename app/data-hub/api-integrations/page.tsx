@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/back-link";
 import { apiProviderConfigs } from "@/lib/mock-reference-data";
 
 export default function ApiIntegrationsPage() {
@@ -28,6 +29,7 @@ export default function ApiIntegrationsPage() {
 
   return (
     <section className="pageSection">
+      <BackLink href="/data-hub" label="Back to Data Hub" />
       <div>
         <h2 className="sectionHeading">API Integrations</h2>
         <p className="sectionSubheading">

@@ -1,0 +1,292 @@
+Operating Co Template
+Damodaran Data Source Pack
+v1.0 - Source inventory for valuation benchmark tables
+
+
+
+Document purposeDefines which Damodaran and related reference tables are needed, useful or optional for the Operating Co Template valuation system.Template basisOperating Co Template - Master Specification v1.5, benchmark-first design.Primary data date shown in supplied tables5-jan.-26Created by/source shown in tablesAswath Damodaran, adamodar@stern.nyu.eduHome pagehttp://www.damodaran.comData websitehttps://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.htmlCompanies in each industryhttps://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xlsVariable definitionshttps://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/ variable.htm
+This document is a source pack and control document. It does not replace the valuation model. Official intrinsic value remains driven by company-specific forecast operating performance, NOPAT, reinvestment, FCFF, WACC, present value of FCFF, terminal value, operating assets, equity bridge and intrinsic value per share.
+
+1. How these tables should be used
+Damodaran Industrial Benchmark is the model-driving industry anchor. Each company selects a Damodaran Industrial Benchmark directly.
+Industry benchmark data provides normalized support for risk, margins, reinvestment, ROC/ROIC, tax, capital structure, cyclicality, forecast/fade and terminal state checks.
+Benchmark data should not mechanically set company forecasts. Company data, analyst estimates and manual/company- specific inputs remain primary.
+Pricing multiples are sanity checks only. They must not feed official intrinsic value, official entry price or official dashboard valuation outputs.
+ISM-sector, if displayed, is only a derived UI/display field and is not part of the data tables below.
+
+2. Required vs support vs sanity-check classification
+CategoryMeaningExamples
+Core requiredNeeded for the base valuation engine to function properly or to calculate/validate key official drivers.Beta, sales-to-capital, reinvestment, margin, ROC/ROIC, tax, cost of debt.
+Core supportNot always directly used as a formula input, but materially supports WACC, FCFF, fade or terminal-state logic.Industry cost of capital, working capital, debt breakdown, industry tax, standard deviations.
+Strong supportImproves robustness, quality checks and fade/terminal discipline, but can be added after base import.Historical growth, fundamental EBIT growth, lease capitalization, R&D, total beta.Pricing sanity onlyUsed only to compare valuation output to market pricing. Never drives official intrinsicPE, EV/EBITDA, EV/Sales, PBV, market cap decile multiples.
+CategoryMeaningExamplesvalue.Optional governance/supportCan be stored for context or later review modules, but not required for the base template.Insider/institutional ownership and similar data.
+
+3. Module dependency map
+Template moduleWhat it needsRelevant tables
+Industry Benchmark ConfigDamodaran Industrial Benchmark list; allowed/excluded/special review status; default stage; cyclicality; history recommendation; asset intensity.Raw industry list, beta table, margin table, capex/sales-to-capital, working capital, ROIC, growth tables.Beta EngineUnlevered beta, cash-adjusted unlevered beta, D/E ratio, selected current/stable beta support.Beta, Unlevered beta and other risk measures; Total Beta only as optional risk support.
+Risk / WACC EngineCost of equity, cost of debt, tax, capital structure, benchmark WACC sanity.Cost of equity and capital; beta table; debt breakdown; synthetic rating; marginal tax rates; standard deviations.
+Reinvestment & FCFF EngineDirect reinvestment, sales-to-capital fallback, working capital, stable reinvestment checks.CapEx/Sales-to-Capital; Working Capital; Fundamental EBIT Growth; Profit Margins; ROIC table.
+Forecast & Fade RulesForecast reasonableness, stage support, cyclicality, growth/margin/reinvestment/ROC fade.Margins; historical growth; sales-to-capital; ROIC; working capital; standard deviations; industry config.
+Terminal Value EngineStable growth, stable margin, stable ROC, stable reinvestment, stable WACC and terminal readiness.Margins; ROIC; tax; WACC/cost of capital; capex/sales-to-capital; working capital.
+Quality / Review ChecksFlags for missing data, outlier assumptions, excessive terminal value, growth without reinvestment, beta/cost-of-debt issues.All core and support tables; pricing multiples only as sanity checks.DashBoardDisplays official outputs and selected industry; does not calculate valuation.Selected Damodaran Industrial Benchmark; ISM display map only if used; final company outputs.
+
+4. Table inventory - provided source tables
+IDSource tableDate updatedClassificationAffected template modules
+D-001
+Beta, Unlevered beta and other risk measures
+5-jan.-26
+Core requiredIndustry Benchmark Config; Beta Engine; Risk / WACC Engine; Forecast & Fade Rules; Terminal Value
+D-002Cost of equity and capital in US dollars
+5-jan.-26
+Core supportRisk / WACC Engine; Beta Engine; Cost of Debt; Quality / Review Checks
+D-003Capital Expenditures, Acquisitions, R&D and Sales/Invested Capital Ratios
+5-jan.-26
+Core requiredReinvestment & FCFF Engine; Forecast & Fade Rules; Terminal Value; Quality / Review Checks
+D-004
+Key working capital numbers as a percent of sales
+5-jan.-26
+Core supportReinvestment & FCFF Engine; Forecast & Fade Rules; Terminal Value; Quality / Review Checks
+D-005
+Profit margins (net, operating and EBITDA)
+5-jan.-26
+Core requiredForecast & Fade Rules; Forecast & Fade Engine; Terminal Value; Quality / Review Checks
+D-006Market value as multiple of book value and invested capital
+5-jan.-26
+Core support / sanityROIC/ROC support; Terminal Value; Quality / Review Checks; Pricing Sanity Checks
+D-007
+Effective tax rate on income
+5-jan.-26
+Core supportTax logic; NOPAT; Forecast & Fade Rules; Terminal Value; Quality / Review Checks
+D-008Marginal corporate tax rate, by country
+5-jan.-26
+Core requiredTax logic; NOPAT; Cost of Debt; Risk / WACC Engine; Terminal Value
+D-009Debt breakdown with book interest rate
+5-jan.-26
+Core supportCost of Debt; Risk / WACC Engine; Firm-to-Equity Bridge support; Quality / Review
+IDSource tableDate updatedClassificationAffected template modulesChecks
+D-010Synthetic rating estimation - interest coverage to rating and default spreadProvided by user; spread table shown in source paste
+Core requiredCost of Debt; Risk / WACC Engine; Quality / Review Checks
+D-011Standard deviations in equity and firm values
+5-jan.-26
+Strong supportRisk / WACC Engine; Cost of Debt; Quality / Review Checks; Industry Benchmark Config
+D-012Historical growth and expected growth by industry
+5-jan.-26
+Strong supportForecast & Fade Rules; Forecast Quality; Quality / Review Checks
+D-013
+Fundamental growth rate in operating income
+5-jan.-26
+Strong supportReinvestment & FCFF Engine; Forecast & Fade Rules; Terminal Value; Quality / Review ChecksD-014Fundamental growth rate in earnings per share5-jan.-26Support / sanityForecast Quality; EPS sanity; Quality / Review Checks
+D-015
+Return on equity
+5-jan.-26
+Support / sanityQuality / Review Checks; EPS/ROE sanity; Financial- company exclusion checks
+D-016
+R&D expenditures over time
+5-jan.-26
+Advanced supportR&D capitalization; Intangible- heavy review; Forecast & Fade Rules; Quality / Review Checks
+D-017Lease capitalization effect on earnings, capital and profitability
+5-jan.-26
+Strong support / advancedDebt/lease support; Reinvestment & FCFF Engine; ROIC/ROC checks; Quality / Review Checks
+D-018
+Total Beta
+5-jan.-26
+Optional supportRisk review; Undiversified owner analysis; Quality / Review Checks
+D-019
+Dollar values of key variables
+5-jan.-26
+Support / sanityIndustry Benchmark Config; Company size sanity; Dashboard/support notes
+D-020Country statistics on market multiples and corporate finance measures
+5-jan.-26
+Support / sanityCountry Risk / ERP context; Market sanity; Dashboard/support notes
+D-021
+Enterprise value multiples
+5-jan.-26
+Pricing sanity onlyRelative Valuation Sanity Checks; Quality / Review Checks; DashBoard supportD-022Revenue multiples5-jan.-26Pricing sanity onlyRelative Valuation Sanity Checks; Forecast sanityD-023Price Earnings multiples5-jan.-26Pricing sanity onlyRelative Valuation Sanity Checks; EPS sanityD-024Pricing and operating measures by market cap decile5-jan.-26Pricing/size sanity onlySize/risk context;  Pricing sanity; Quality / Review Checks
+D-025
+Dividends and FCFE ratios
+5-jan.-26
+Support / sanityCash return sanity; Equity payout review; Quality / Review Checks
+D-026Cash flows from financing in most recent year
+5-jan.-26
+Support / sanityCapital structure review; SBC/dilution support; Quality / Review ChecksD-027CEO, insider and institutional stock holdings5-jan.-26Optional governance supportQuality / Review Checks; Dashboard/support notes
+
+5. Detailed table cards
+D-01 - Beta, Unlevered beta and other risk measures
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationCore required
+What is this data?Industry-level beta, D/E ratio, effective tax rate, unlevered beta, cash/firms value, cash-adjusted unlevered beta, HiLo risk, equity volatility, operating income volatility and historical beta series.
+Main columns / fieldsIndustry Name; Number of firms; Beta; D/E Ratio; Effective Tax rate; Unlevered beta; Cash/Firm value; Unlevered beta corrected for cash;  HiLo Risk; Standard deviation of equity; Standard deviation in operating income; historical beta years; Average.Used for in Operating Co TemplatePrimary industry beta source. The cash-adjusted unlevered beta is
+preferred for bottom-up beta support. Used to derive current/stable beta support and to test whether selected beta is reasonable.Affected modulesIndustry Benchmark Config; Beta Engine; Risk / WACC Engine; Forecast & Fade Rules; Terminal Value
+Limitations / policyNot a company-specific beta. It supports valuation but does not replace company-specific judgment, manual beta overrides or regression/user beta when appropriate.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-02 - Cost of equity and capital in US dollars
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationCore support
+What is this data?Industry-level cost of equity, cost of debt, tax rate, equity/debt weights and cost of capital in USD. Includes input assumptions for long-term Treasury rate, equity risk premium and default spread.
+Main columns / fieldsIndustry Name; Number of Firms; Beta; Cost of Equity; E/(D+E); Std Dev in Stock; Cost of Debt; Tax Rate; After-tax Cost of Debt; D/(D+E); Cost of Capital.Used for in Operating Co TemplateBenchmark WACC/cost-of-capital support. Useful for stable WACC sanity checks and industry capital structure context.Affected modulesRisk / WACC Engine; Beta Engine; Cost of Debt; Quality / Review Checks
+Limitations / policyThe template should still calculate company WACC from selected risk- free rate, weighted ERP, selected beta, company/benchmark debt weights and selected cost of debt. This table is a benchmark, not the official WACC formula.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-03 - Capital Expenditures, Acquisitions, R&D and Sales/Invested Capital Ratios
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationCore requiredWhat is this data?Industry reinvestment data including capex, D&A, acquisitions, net R&D, net capex/sales, net capex/after-tax EBIT and sales-to-invested-capital.
+Main columns / fieldsIndustry Name; Number of Firms; Capital Expenditures; Depreciation & Amortization; Cap Ex/Deprecn; Acquisitions; Net R&D; Net Cap Ex/Sales; Net Cap Ex/EBIT(1-t); Sales/Invested Capital (LTM).
+Used for in Operating Co TemplatePrimary source for industry sales-to-capital ratio and reinvestment discipline. Used when direct reinvestment data is weak and for fade/stable reinvestment sanity checks.Affected modulesReinvestment & FCFF Engine; Forecast & Fade Rules; Terminal Value; Quality / Review ChecksLimitations / policyIndustry averages/aggregates should not overwrite company-specific CapEx, D&A or working capital where reliable data exists.
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls |
+Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-04 - Key working capital numbers as a percent of sales
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationCore supportWhat is this data?Industry receivables, inventory, payables and non-cash working capital as a percent of sales.Main columns / fieldsIndustry Name; Number of firms; Accounts Receivable/Sales; Inventory/Sales; Accounts Payable/Sales; Non-cash WC/Sales.Used for in Operating Co TemplateBenchmark for non-cash working capital and terminal working capital checks. Helps identify unusual working capital releases or capital needs.Affected modulesReinvestment & FCFF Engine; Forecast & Fade Rules; Terminal Value; Quality / Review Checks
+Limitations / policyFinancial sectors often show NA or economically different working capital metrics and should not be used as standard operating-company inputs.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-05 - Profit margins (net, operating and EBITDA)
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationCore requiredWhat is this data?Industry gross margin, net margin, operating margin variants, EBITDA/sales and expense ratios including R&D, SG&A, SBC and leases.
+Main columns / fieldsIndustry Name; Number of firms; Gross Margin; Net Margin; pre-tax operating margin variants; after-tax margin variants; EBITDA/Sales; COGS/Sales; R&D/Sales; SG&A/Sales; Stock-Based Compensation/Sales; Lease Expense/Sales.
+Used for in Operating Co TemplatePrimary benchmark for target margin, stable margin and forecast/fade sanity checks. Helps flag terminal margins far above or below industry economics.Affected modulesForecast & Fade Rules; Forecast & Fade Engine; Terminal Value; Quality / Review ChecksLimitations / policyThe company forecast remains primary. Industry margin is a normalizing anchor and review trigger, not an automatic margin input.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-06 - Market value as multiple of book value and invested capital
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationCore support / sanityWhat is this data?Industry PBV, ROE, EV/Invested Capital and ROIC.
+Main columns / fieldsIndustry Name; Number of firms; PBV; ROE; EV/Invested Capital; ROIC.
+Used for in Operating Co TemplateROIC/ROC benchmark support for stable ROC, reinvestment discipline and value-creation checks. PBV and EV/Invested Capital are pricing sanity checks.Affected modulesROIC/ROC support; Terminal Value; Quality / Review Checks; Pricing Sanity ChecksLimitations / policyROIC can be distorted by accounting, leases, R&D, cyclicality and financial-sector classifications.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-07 - Effective tax rate on income
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationCore supportWhat is this data?Industry effective and cash tax rates based on accrual taxes, taxable income and cash taxes.
+Main columns / fieldsIndustry name; Number of firms; Total Taxable Income; Total Taxes Paid (Accrual); Total Cash Taxes Paid; Cash Taxes/Accrual Taxes; effective tax rates; cash tax rates.Used for in Operating Co TemplateSanity check for company tax rate, normalized tax and effective/cash tax behavior. Helps flag unrealistic tax assumptions.Affected modulesTax logic; NOPAT; Forecast & Fade Rules; Terminal Value; Quality / Review ChecksLimitations / policyTerminal tax should usually move toward a normalized or marginal tax concept, especially if current effective tax is distorted.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-08 - Marginal corporate tax rate, by country
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobal by countryClassificationCore requiredWhat is this data?Country-level marginal corporate tax rates and tax rates accounting for global minimum tax.Main columns / fieldsCountry; Corporate Tax Rate; Tax Rate Accounting for Global Minimum Tax.Used for in Operating Co TemplateCountry tax reference for normalized/marginal tax support, after-tax cost of debt and terminal tax sanity.Affected modulesTax logic; NOPAT; Cost of Debt; Risk / WACC Engine; Terminal ValueLimitations / policyCompany-specific tax jurisdictions and effective tax rates can differ materially. Should be used as reference or fallback, not a blind override.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-09 - Debt breakdown with book interest rate
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationCore support
+What is this data?Industry debt composition and book interest rates, including lease debt, conventional debt, total debt, interest expense and short-term debt share.
+Main columns / fieldsIndustry Name; Number of firms; Lease Debt; Conventional Debt; Total Debt with leases; Interest expense; Book interest rate; Short-term Debt  as % of Total Debt; Lease Debt (Accounting); Debt repaid; Debt raised.Used for in Operating Co TemplateCost of debt and capital structure support. Can help flag unreasonable company interest cost or leverage assumptions.Affected modulesCost of Debt; Risk / WACC Engine; Firm-to-Equity Bridge support; Quality
+/ Review Checks
+Limitations / policyBook interest rates may lag current market rates. The official cost of debt should use current debt cost logic, synthetic rating/default spread and/or reliable company input.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-10 - Synthetic rating estimation - interest coverage to rating and default spread
+Date updatedProvided by user; spread table shown in source pasteCreated by / sourceAswath Damodaran synthetic rating spreadsheet logic / user-provided source pasteData scopeLarge firms, smaller/riskier firms, financial service firmsClassificationCore required
+What is this data?Interest coverage ratio lookup that maps EBIT/interest expense to estimated bond rating and default spread. Contains separate threshold tables for large non-financial firms, smaller/riskier firms and financial service firms.
+Main columns / fieldsInterest coverage lower bound; interest coverage upper bound; rating; default spread. Input fields include firm type, EBIT, interest expense and long-term government bond rate.Used for in Operating Co TemplateFallback/standard method for synthetic rating and pre-tax cost of debt where market debt yield or company credit rating is missing.Affected modulesCost of Debt; Risk / WACC Engine; Quality / Review Checks
+Limitations / policyThresholds need update policy and source discipline. Financial firms are outside the standard Operating Co valuation scope and should be treated separately.
+Source linksSynthetic rating/default spread table provided by user; update policy should reference current default spread source and workbook documentation.
+D-11 - Standard deviations in equity and firm values
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationStrong supportWhat is this data?Industry equity and firm-value volatility, plus capital weights.Main columns / fieldsIndustry Name; Number of Firms; Std Deviation in Equity; Std Deviation in Firm Value; E/(D+E); D/(D+E).Used for in Operating Co TemplateRisk sanity check and possible cost-of-debt/default-spread support where volatility-based logic is used.Affected modulesRisk / WACC Engine; Cost of Debt; Quality / Review Checks; Industry Benchmark Config
+Limitations / policyNot a direct WACC input unless explicitly connected. Use as a support signal, not a valuation override.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-12 - Historical growth and expected growth by industry
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationStrong supportWhat is this data?Historical CAGR in revenues and net income and expected growth in revenues/EPS where available.
+Main columns / fieldsIndustry Name; Number of Firms; CAGR in Net Income - Last 5 years; CAGR in Revenues - Last 5 years; Expected Growth in Revenues - Next 2 years; Expected Growth in Revenues - Next 5 years; Expected Growth in EPS - Next 5 years.Used for in Operating Co TemplateForecast reasonableness support and industry growth context. Helps identify unusually aggressive or conservative growth assumptions.Affected modulesForecast & Fade Rules; Forecast Quality; Quality / Review ChecksLimitations / policyIndustry growth should not set the company forecast. Analyst/company data remains primary.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-13 - Fundamental growth rate in operating income
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationStrong supportWhat is this data?Sustainable operating-income growth tied to ROC and reinvestment rate.Main columns / fieldsIndustry Name; Number of Firms; ROC; Reinvestment Rate; Expected Growth in EBIT.
+Used for in Operating Co TemplateDirectly supports the Damodaran-style relationship: growth = reinvestment rate x ROC. Useful for testing growth/reinvestment consistency.Affected modulesReinvestment & FCFF Engine; Forecast & Fade Rules; Terminal Value; Quality / Review ChecksLimitations / policySome sectors show NA or extreme values. Use as review support and not as a mechanical forecast.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-14 - Fundamental growth rate in earnings per share
+Date updated5-jan.-26
+Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationSupport / sanityWhat is this data?Sustainable EPS growth tied to ROE and retention ratio.Main columns / fieldsIndustry Name; Number of Firms; ROE; Retention Ratio; Fundamental Growth.Used for in Operating Co TemplateEPS/growth sanity check. Helpful for comparison with analyst EPS growth where EPS is used as support.Affected modulesForecast Quality; EPS sanity; Quality / Review ChecksLimitations / policyNot an official FCFF driver. EPS growth does not replace operating- income/FCFF growth logic.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-15 - Return on equity
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationSupport / sanityWhat is this data?Industry ROE unadjusted and R&D-adjusted.Main columns / fieldsIndustry Name; Number of firms; ROE (unadjusted); ROE (adjusted for R&D).Used for in Operating Co TemplateROE sanity/support for profitability and shareholder-return context.Affected modulesQuality / Review Checks; EPS/ROE sanity; Financial-company exclusion checksLimitations / policyROE is not the key return measure for Operating Co FCFF valuation. ROC/ROIC is more central.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-16 - R&D expenditures over time
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationAdvanced supportWhat is this data?Industry R&D capitalized estimate, R&D as percent of invested capital/revenue, historical R&D and 5-year R&D CAGR.
+Main columns / fieldsIndustry Name; Number of firms; R&D Capitalized; Capitalized R&D as
+% of Invested Capital; R&D - LTM; Current R&D as % of Revenue; R&D history; CAGR in R&D.
+Used for in Operating Co TemplateSupports intangible-heavy industries and future/advanced R&D capitalization logic. Useful for software, biotech, pharma, semiconductor and healthcare product review.Affected modulesR&D capitalization; Intangible-heavy review; Forecast & Fade Rules; Quality / Review ChecksLimitations / policyR&D capitalization is advanced/special treatment. Base template can store it as support data without making it mandatory.
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions:
+https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-17 - Lease capitalization effect on earnings, capital and profitability
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationStrong support / advancedWhat is this data?Lease-adjusted debt, debt-to-capital, operating income, ROIC and operating margin by industry.
+Main columns / fieldsIndustry Name; Number of firms; Lease Expense/Sales; Total Debt without leases; Total Debt with leases; Lease Debt as % of Total Debt; debt-to-capital with/without leases; operating income before/after lease adjustment; ROIC with/without leases; margins with/without lease adjustment; lease debt estimates.Used for in Operating Co TemplateSupports consistency where leases are treated as debt and helps validate debt, capital and operating margin assumptions.Affected modulesDebt/lease support; Reinvestment & FCFF Engine; ROIC/ROC checks; Quality / Review Checks
+Limitations / policyAccounting lease rules differ. Keep method transparent and avoid double-counting lease debt if company statements already capitalize leases.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-18 - Total Beta
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationOptional supportWhat is this data?Total beta for completely undiversified investors, plus market correlation.
+Main columns / fieldsIndustry Name; Number of firms; Average Unlevered Beta; Average Levered Beta; Average correlation with the market; Total Unlevered Beta; Total Levered Beta.Used for in Operating Co TemplateOptional risk context where owner is undiversified.Affected modulesRisk review; Undiversified owner analysis; Quality / Review ChecksLimitations / policyNot the standard beta for public company FCFF/WACC valuation with diversified investors.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-19 - Dollar values of key variables
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationSupport / sanityWhat is this data?Industry-level dollar values used to assess market size and company size.Main columns / fieldsIndustry Name; Number of firms; Average Company Age; Market Cap;
+Book Equity; Enterprise Value; Invested Capital; Total Debt; Revenues; Gross Profit; EBITDA; EBIT; Net Income.Used for in Operating Co TemplateScale sanity and industry context. Helps distinguish small/risky vs larger/mature industry contexts.Affected modulesIndustry Benchmark Config; Company size sanity; Dashboard/support notesLimitations / policyNot a direct valuation driver.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-20 - Country statistics on market multiples and corporate finance measures
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobal by countryClassificationSupport / sanityWhat is this data?Country-level statistics on market cap, debt, firm value, cash, enterprise value, market multiples and dividend yield.
+Main columns / fieldsCountry; count; sum(Market Cap); sum(Total Debt incl leases); sum(Firm Value); sum(Cash); sum(Enterprise Value); median PE/PBV/PS/EV multiples; dividend yield; sum(Dividends).Used for in Operating Co TemplateCountry-level market context and sanity checks.Affected modulesCountry Risk / ERP context; Market sanity; Dashboard/support notesLimitations / policyDoes not replace weighted ERP, risk-free rate or FX rates.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-21 - Enterprise value multiples
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationPricing sanity onlyWhat is this data?Industry EV/EBITDA, EV/EBIT and related enterprise multiples for positive EBITDA firms and all firms.Main columns / fieldsIndustry Name; Number of firms; EV/EBITDAR&D; EV/EBITDA; EV/EBIT; EV/EBIT(1-t), separated by positive EBITDA firms and all firms.Used for in Operating Co TemplateSanity check for market pricing and exit-multiple reference only.Affected modulesRelative Valuation Sanity Checks; Quality / Review Checks; DashBoard supportLimitations / policyMust not feed official intrinsic value, official operating assets value or entry price.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-22 - Revenue multiples
+Date updated5-jan.-26
+Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationPricing sanity onlyWhat is this data?Industry Price/Sales, Net Margin, EV/Sales and pre-tax operating margin.Main columns / fieldsIndustry Name; Number of firms; Price/Sales; Net Margin; EV/Sales; Pre- tax Operating Margin.Used for in Operating Co TemplateRevenue multiple sanity and margin/revenue pricing context.Affected modulesRelative Valuation Sanity Checks; Forecast sanityLimitations / policyNot an official valuation method in the Operating Co Template.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-23 - Price Earnings multiples
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationPricing sanity onlyWhat is this data?Industry PE multiples, money-losing share, expected EPS growth and PEG ratio.
+Main columns / fieldsIndustry Name; Number of firms; % Money Losing firms; Current PE; Trailing PE; Forward PE; aggregate market cap/net income metrics; expected growth next 5 years; PEG ratio.Used for in Operating Co TemplateMarket pricing sanity only.Affected modulesRelative Valuation Sanity Checks; EPS sanityLimitations / policyNot used in official FCFF/WACC value.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-24 - Pricing and operating measures by market cap decile
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeUSClassificationPricing/size sanity onlyWhat is this data?Median pricing and operating measures by market cap decile for firms with market cap above $10 million.
+Main columns / fieldsMarket Cap Decile; Number of firms; PE/PEG/PBV/Price-Sales/EV multiples; ROE; pre-tax ROIC; net margin; operating margin; loss- making company shares.Used for in Operating Co TemplateSize/risk and market-cap decile context. Useful for small/risky company review.Affected modulesSize/risk context; Pricing sanity; Quality / Review ChecksLimitations / policyUS-only decile table. Not a direct industry benchmark or valuation driver.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-25 - Dividends and FCFE ratios
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationSupport / sanityWhat is this data?Industry dividends, buybacks, stock issuance, FCFE and cash return ratios.
+Main columns / fieldsIndustry name; Number of firms; Dividends; Net Income; Payout; Dividends + Buybacks; Cash Return %; net cash returned; FCFE before/after debt cash flows; cash return/FCFE ratios; cash/firm value.Used for in Operating Co TemplateCash return and payout sanity. Useful but secondary to FCFF official valuation.Affected modulesCash return sanity; Equity payout review; Quality / Review ChecksLimitations / policyFCFE/payout data does not drive official operating FCFF valuation.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-26 - Cash flows from financing in most recent year
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationSupport / sanityWhat is this data?Industry-level financing flows including dividends, buybacks, equity issuance, debt repaid/raised and lease debt change.
+Main columns / fieldsIndustry Name; Number of Firms; Dividends; Buybacks; Equity Issuance; Net Equity Change; Net Equity Change % of Book Equity; Debt Repaid; Debt Raised; Net Debt Change; Net Change in Debt % of Total Debt; Change in Lease Debt.Used for in Operating Co TemplateFinancing behavior, dilution/capital return and debt change sanity.Affected modulesCapital structure review; SBC/dilution support; Quality / Review ChecksLimitations / policyNot part of official FCFF calculation except as review context.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab le.htm
+D-27 - CEO, insider and institutional stock holdings
+Date updated5-jan.-26Created by / sourceAswath Damodaran / user-provided source pasteData scopeGlobalClassificationOptional governance supportWhat is this data?Industry ownership statistics as percent of shares outstanding.Main columns / fieldsIndustry Name; Number of Firms; CEO Holding; Corporate Holdings; Institutional Holdings; Insider Holdings.Used for in Operating Co TemplateGovernance/ownership context if later wanted.Affected modulesQuality / Review Checks; Dashboard/support notesLimitations / policyNot required for base valuation and should not affect intrinsic value.
+
+Source linksDamodaran Data website: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/data.html | Companies in each industry: https://pages.stern.nyu.edu/~adamodar/pc/datasets/indname.xls | Variable definitions: https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/variab
+le.htm
+
+6. Synthetic rating lookup - required structure
+The synthetic rating table should be implemented as a reference table, not as hidden logic. The model should choose the correct lookup set based on company type and then map interest coverage to rating and default spread.
+
+TypeFieldPurpose
+Input
+Firm type1 = large manufacturing/non-financial, 2 = smaller or riskier, 3 = financial service. Operating Co base normally uses 1 or 2; financial service is outside standard Operating Co valuation.
+Input
+EBITCurrent EBIT used to calculate interest coverage. For operating companies this should be operating EBIT; financial firms have special treatment.InputInterest expenseCurrent interest expense used in interest coverage.InputLong-term government bond rateUsed with default spread to estimate cost of debt.OutputInterest coverage ratioEBIT / Interest expense.OutputEstimated bond ratingMapped from interest coverage lookup table.OutputEstimated default spreadMapped from rating/spread table.OutputEstimated cost of debtRisk-free / long-term government bond rate + estimated default spread.
+
+7. Missing or separate data sources
+The supplied tables cover most of the industry benchmark data needed for the Operating Co Template. The following items are still separate requirements for the full workbook data architecture:
+
+Data source / tableWhy it is needed
+Country Risk Premium / Equity Risk Premium tableNeeded if the template will calculate weighted ERP by country/revenue exposure. The cost-of-capital table includes an equity risk premium assumption, but not the full country ERP/CRP table needed for country exposure logic.
+Risk-free rates by valuation currencyNeeded for selected risk-free rate and WACC by valuation currency. This is a separate system table, not one of the Damodaran industry benchmark tables pasted here.
+FX rates / currency mapNeeded for Reporting Currency, Valuation Currency and Trading / Price Currency conversion. Separate from Damodaran industry benchmark data.
+Companies in each industry (indname.xls)Referenced in every Damodaran table. Useful for source audit and industry composition review, but not required to calculate company valuation if benchmark data is already imported.
+Variable definitionsReferenced in every Damodaran table. Should be kept as a source link so terms such as invested capital, ROIC, D/E and lease adjustments are interpreted consistently.
+Conclusion: for the base Operating Co valuation engine, the most important Damodaran industry benchmark tables are beta/unlevered beta, cost of capital, capex/sales-to-capital, working capital, margins, ROIC/ROC, tax, debt/cost of debt support and synthetic rating/default spreads. The remaining tables should be stored as support or sanity-check data where useful, but they should not override official FCFF/WACC valuation logic.
+
+8. Recommended workbook table names
+Workbook table namePurposetblDamodaranIndustryBenchmarkListRaw Damodaran Industrial Benchmark names and template status.tblIndustryBenchmarkConfigBenchmark-first status, default stage, cyclicality, history recommendation,
+Workbook table namePurposeasset intensity and notes.tblDamodaranIndustryBetaBeta, D/E, unlevered beta, cash/firms value, cash-adjusted unlevered beta, volatility.tblDamodaranIndustryCostOfCapitalIndustry cost of equity, cost of debt, tax rate, debt/equity weights and cost of capital.tblDamodaranIndustryCapexReinvestmentCapEx, D&A, acquisitions, net R&D, net capex/sales, sales-to-capital.tblDamodaranIndustryWorkingCapitalReceivables/sales, inventory/sales, payables/sales, non-cash WC/sales.tblDamodaranIndustryMarginsGross, operating, net and EBITDA margin metrics plus R&D/SG&A/SBC/lease expense ratios.tblDamodaranIndustryROICPBV, ROE, EV/invested capital and ROIC/ROC benchmark support.tblDamodaranIndustryTaxRatesEffective and cash tax rates by industry.tblCountryMarginalTaxRatesCountry marginal corporate tax and global minimum tax adjusted rate.tblSyntheticRatingSpreadsInterest coverage to rating and default spread lookup tables.tblDamodaranIndustryPricingMultiplesEV, revenue, PE and PBV pricing sanity data. May be split by multiple family.tblDamodaranIndustryGrowthHistorical and expected growth plus fundamental EBIT/EPS growth support.tblDamodaranIndustryDebtDebt breakdown, book interest rate and short-term debt share.tblDamodaranIndustryLeaseAdjustmentLease capitalization effect on debt, capital, margin and ROIC.tblDamodaranIndustrySupportOptionalOptional R&D, total beta, ownership, financing flows and size/context data where not split into separate tables.
+
+9. Update and import policy
+Policy itemRuleSource dateEach imported table should store the source date shown by Damodaran, for these supplied tables generally 5-jan.-26.Imported timestampThe workbook should store the timestamp when the data was imported/pasted into the workbook.Source URLEach table should show the Damodaran source URL, companies-in-industry link and variable definitions link.Manual paste fallbackIf Apps Script import is not reliable, the sheet should still have ready-to-paste table structures with exact headers.No hidden overwriteManual overrides should not be silently overwritten by import scripts.Benchmark-first keyAll industry tables should use exact Damodaran Industrial Benchmark names as keys.
+Financial/REIT rowsFinancial services, banks, insurance, REIT and NAV-like real estate categories should be classified as excluded or special review in the Operating Co Template.
+
+
+
+

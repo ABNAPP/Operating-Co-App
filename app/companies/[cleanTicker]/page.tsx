@@ -1,5 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BackLink } from "@/components/back-link";
+import { ValuationEnginesStatusCard } from "@/components/valuation-engines-status-card";
 import { getCompanyByCleanTicker } from "@/lib/firestore/repositories/companiesRepository";
 import {
   getBenchmarkDataPullKeysTable,
@@ -7,6 +8,28 @@ import {
   getIndustryBenchmarkConfigTable,
   getIndustryISMDisplayMapTable,
 } from "@/lib/firestore/repositories/sectorIndustryMappingRepository";
+import { BetaPolicyCard } from "@/components/beta-policy-card";
+import { BetaReferenceCard } from "@/components/beta-reference-card";
+import { ForecastFadeFoundationCard } from "@/components/forecast-fade-foundation-card";
+import { ReinvestmentFcffFoundationCard } from "@/components/reinvestment-fcff-foundation-card";
+import { TerminalValueFoundationCard } from "@/components/terminal-value-foundation-card";
+import { DcfPvFoundationCard } from "@/components/dcf-pv-foundation-card";
+import { EquityBridgeFoundationCard } from "@/components/equity-bridge-foundation-card";
+import { IntrinsicValueFoundationCard } from "@/components/intrinsic-value-foundation-card";
+import { WaccFoundationCard } from "@/components/wacc-foundation-card";
+import { computeBetaPolicyForCompany } from "@/lib/engines/beta/betaPolicyService";
+import { computeForecastFadeForCompany } from "@/lib/engines/forecast-fade/forecastFadeService";
+import { computeReinvestmentFcffForCompany } from "@/lib/engines/reinvestment-fcff/reinvestmentFcffService";
+import { computeTerminalValueForCompany } from "@/lib/engines/terminal-value/terminalValueService";
+import { computeDcfPvForCompany } from "@/lib/engines/dcf-pv/dcfPvService";
+import { computeEquityBridgeForCompany } from "@/lib/engines/equity-bridge/equityBridgeService";
+import { computeIntrinsicValueForCompany } from "@/lib/engines/intrinsic-value/intrinsicValueService";
+import { computeWaccForCompany } from "@/lib/engines/wacc/waccService";
+import {
+  formatAmountMillions,
+  formatPercent,
+  formatPerShare,
+} from "@/lib/utils/formatters";
 
 const workspaceSections = [
   "Snapshot",
@@ -48,9 +71,293 @@ export default async function CompanyWorkspacePage({
   const pullKeys =
     pullKeysTable.data.find((row) => row.damodaranIndustrialBenchmark === selectedBenchmark) ?? null;
 
+  const betaBundle = selectedBenchmark
+    ? await computeBetaPolicyForCompany(company)
+    : null;
+  const betaLookup = betaBundle?.lookup ?? {
+    selectedBenchmark: "",
+    betaTableKey: null,
+    betaTableKeyMode: null,
+    datasetId: null,
+    matched: false,
+    matchType: "Missing" as const,
+    betaReference: null,
+    warnings: [],
+    errors: ["No Damodaran Industrial Benchmark selected."],
+  };
+  const betaReadiness = betaBundle?.readiness ?? {
+    selectedBenchmark: "",
+    hasIndustryBenchmark: false,
+    hasBetaPullKey: false,
+    hasBetaDataset: false,
+    hasMatchingBetaRow: false,
+    hasUsableUnleveredBeta: false,
+    status: "Not Applicable" as const,
+    notes: ["Select a Damodaran Industrial Benchmark on the company sheet."],
+  };
+  const betaPolicy = betaBundle?.policy ?? {
+    selectedUnleveredBeta: null,
+    selectedLeveredBeta: null,
+    selectedBeta: null,
+    selectedBetaSource: "Review Required",
+    selectedDebtToEquity: null,
+    selectedTaxRate: null,
+    releveringFormulaUsed: null,
+    status: "Not Applicable" as const,
+    warnings: [],
+    errors: [],
+    notes: [],
+  };
+  const hasMockBetaPolicyInputs = Boolean(company.betaPolicyInputs);
+
+  const waccBundle = selectedBenchmark ? await computeWaccForCompany(company) : null;
+  const waccInput = waccBundle?.input ?? {
+    companyId: company.identity.cleanTicker,
+    selectedBenchmark: "",
+    valuationCurrency: company.currencies.valuationCurrency,
+    countryOfRisk: company.identity.countryOfRisk,
+    selectedBeta: null,
+    selectedBetaSource: null,
+    riskfreeRate: null,
+    riskfreeSource: null,
+    equityRiskPremium: null,
+    equityRiskPremiumSource: null,
+    countryRiskPremium: null,
+    countryRiskPremiumSource: null,
+    selectedDebtToEquity: null,
+    selectedDebtWeight: null,
+    selectedEquityWeight: null,
+    preTaxCostOfDebt: null,
+    costOfDebtSource: null,
+    selectedTaxRate: null,
+    taxRateSource: null,
+    manualOverrides: {},
+    notes: ["Select a Damodaran Industrial Benchmark before WACC foundation can run."],
+  };
+  const waccReadiness = waccBundle?.readiness ?? {
+    hasSelectedBeta: false,
+    hasRiskfreeRate: false,
+    hasERP: false,
+    hasDebtEquityOrWeights: false,
+    hasPreTaxCostOfDebt: false,
+    hasTaxRate: false,
+    status: "Not Applicable" as const,
+    missingInputs: ["Damodaran Industrial Benchmark"],
+    reviewFlags: [],
+  };
+  const waccResult = waccBundle?.result ?? {
+    costOfEquity: null,
+    afterTaxCostOfDebt: null,
+    debtWeight: null,
+    equityWeight: null,
+    wacc: null,
+    status: "Not Applicable" as const,
+    warnings: [],
+    errors: [],
+    notes: [],
+    sourceSummary: {},
+  };
+  const hasMockWaccScaffoldInputs = Boolean(company.waccFoundationInputs);
+
+  const forecastFadeBundle = selectedBenchmark
+    ? await computeForecastFadeForCompany(company)
+    : null;
+  const forecastFadeInput = forecastFadeBundle?.input ?? {
+    companyId: company.identity.cleanTicker,
+    selectedBenchmark: "",
+    templateStatus: null,
+    defaultStageRecommendation: null,
+    historyRecommendation: null,
+    cyclicalityFlag: null,
+    assetIntensity: null,
+    regulatoryFlag: null,
+    manualForecastYearsAvailable: 0,
+    historicalYearsAvailable: company.availableHistoricalPeriods?.length ?? 0,
+    hasRevenueForecast: false,
+    hasMarginForecast: false,
+    hasReinvestmentInputs: false,
+    hasTerminalAssumptions: false,
+    notes: ["Select a Damodaran Industrial Benchmark before Forecast & Fade foundation can run."],
+  };
+  const forecastFadeResult = forecastFadeBundle?.result ?? {
+    recommendedStageType: null,
+    recommendedForecastYears: null,
+    recommendedHistoryYears: null,
+    fadeRequired: null,
+    fadeStartYear: null,
+    fadeToStableYear: null,
+    cyclicalityReviewRequired: false,
+    benchmarkReviewRequired: false,
+    readinessStatus: "Not Applicable" as const,
+    missingInputs: ["Damodaran Industrial Benchmark"],
+    warnings: [],
+    notes: [],
+  };
+
+  const reinvestmentFcffBundle = selectedBenchmark
+    ? await computeReinvestmentFcffForCompany(company)
+    : null;
+  const reinvestmentFcffInput = reinvestmentFcffBundle?.input ?? {
+    companyId: company.identity.cleanTicker,
+    selectedBenchmark: "",
+    forecastYear: "",
+    revenue: null,
+    priorRevenue: null,
+    ebit: null,
+    taxRate: null,
+    capex: null,
+    depreciationAmortization: null,
+    changeInNonCashWorkingCapital: null,
+    salesToCapital: null,
+    methodOverride: null,
+    sourceNotes: ["Select a Damodaran Industrial Benchmark before Reinvestment / FCFF foundation can run."],
+  };
+  const reinvestmentFcffResult = reinvestmentFcffBundle?.result ?? {
+    nopat: null,
+    selectedReinvestmentMethod: null,
+    reinvestment: null,
+    fcff: null,
+    status: "Not Applicable" as const,
+    missingInputs: ["Damodaran Industrial Benchmark"],
+    warnings: [],
+    notes: [],
+    methodComparison: {
+      directAvailable: false,
+      directReinvestment: null,
+      salesToCapitalAvailable: false,
+      salesToCapitalReinvestment: null,
+      chosenMethod: null,
+      comparisonNote: null,
+    },
+  };
+
+  const terminalValueBundle = selectedBenchmark
+    ? await computeTerminalValueForCompany(company)
+    : null;
+  const terminalValueInput = terminalValueBundle?.input ?? {
+    companyId: company.identity.cleanTicker,
+    selectedBenchmark: "",
+    finalForecastYear: "",
+    finalForecastFcff: null,
+    stableGrowthRate: null,
+    stableWacc: null,
+    terminalMethod: null,
+    forecastFadeStatus: "Not Applicable" as const,
+    waccStatus: "Not Applicable" as const,
+    fcffStatus: "Not Applicable" as const,
+    sourceNotes: ["Select a Damodaran Industrial Benchmark before Terminal Value foundation can run."],
+  };
+  const terminalValueResult = terminalValueBundle?.result ?? {
+    terminalFcff: null,
+    terminalValue: null,
+    terminalMethodUsed: null,
+    terminalSpread: null,
+    status: "Not Applicable" as const,
+    missingInputs: ["Damodaran Industrial Benchmark"],
+    warnings: [],
+    notes: [],
+  };
+
+  const dcfPvBundle = selectedBenchmark
+    ? await computeDcfPvForCompany(company)
+    : null;
+  const dcfPvInput = dcfPvBundle?.input ?? {
+    companyId: company.identity.cleanTicker,
+    selectedBenchmark: "",
+    forecastPeriods: [
+      {
+        yearNumber: 1,
+        forecastYear: "",
+        fcff: null,
+      },
+    ],
+    terminalYearNumber: 1,
+    terminalValue: null,
+    terminalValueStatus: "Not Applicable" as const,
+    wacc: null,
+    waccStatus: "Not Applicable" as const,
+    sourceNotes: ["Select a Damodaran Industrial Benchmark before DCF / PV foundation can run."],
+  };
+  const dcfPvResult = dcfPvBundle?.result ?? {
+    forecastPeriods: [
+      {
+        yearNumber: 1,
+        forecastYear: "",
+        fcff: null,
+        wacc: null,
+        discountFactor: null,
+        pvFcff: null,
+        status: "Not Applicable" as const,
+        missingInputs: [],
+        notes: [],
+      },
+    ],
+    pvForecastFcff: null,
+    pvTerminalValue: null,
+    valueOfOperatingAssets: null,
+    status: "Not Applicable" as const,
+    missingInputs: ["Damodaran Industrial Benchmark"],
+    warnings: [],
+    notes: [],
+  };
+
+  const equityBridgeBundle = selectedBenchmark
+    ? await computeEquityBridgeForCompany(company)
+    : null;
+  const equityBridgeInput = equityBridgeBundle?.input ?? {
+    companyId: company.identity.cleanTicker,
+    selectedBenchmark: "",
+    valueOfOperatingAssets: null,
+    cashAndCashEquivalents: null,
+    nonOperatingAssets: null,
+    totalDebt: null,
+    preferredEquity: null,
+    minorityInterest: null,
+    otherNonEquityClaims: null,
+    sourceNotes: ["Select a Damodaran Industrial Benchmark before Firm-to-Equity Bridge foundation can run."],
+  };
+  const equityBridgeResult = equityBridgeBundle?.result ?? {
+    valueOfOperatingAssets: null,
+    totalAdditions: null,
+    totalDeductions: null,
+    equityValue: null,
+    status: "Not Applicable" as const,
+    missingInputs: ["Damodaran Industrial Benchmark"],
+    warnings: [],
+    notes: [],
+  };
+
+  const intrinsicValueBundle = selectedBenchmark
+    ? await computeIntrinsicValueForCompany(company)
+    : null;
+  const intrinsicValueInput = intrinsicValueBundle?.input ?? {
+    companyId: company.identity.cleanTicker,
+    selectedBenchmark: "",
+    equityValue: null,
+    equityValueCurrency: company.currencies.valuationCurrency ?? null,
+    selectedDilutedShares: null,
+    shareUnit: null,
+    selectedSharesSource: null,
+    currentSharePrice: null,
+    priceCurrency: null,
+    fxRateToValuationCurrency: null,
+    sourceNotes: ["Select a Damodaran Industrial Benchmark before Intrinsic Value / Share foundation can run."],
+  };
+  const intrinsicValueResult = intrinsicValueBundle?.result ?? {
+    intrinsicValuePerShare: null,
+    valuationCurrency: company.currencies.valuationCurrency ?? null,
+    selectedDilutedShares: null,
+    shareUnit: null,
+    selectedSharesSource: null,
+    status: "Not Applicable" as const,
+    missingInputs: ["Damodaran Industrial Benchmark"],
+    warnings: [],
+    notes: [],
+  };
   return (
     <section className="pageSection">
       <div>
+        <BackLink href="/companies" label="Back to Companies" />
         <h2 className="sectionHeading">Company Workspace</h2>
         <p className="sectionSubheading">
           {company.identity.companyName} ({company.identity.fullTicker}) company-specific
@@ -87,12 +394,21 @@ export default async function CompanyWorkspacePage({
         <article className="card">
           <h3 className="cardTitle">Inputs</h3>
           <p className="cardMeta">
-            Current price: {company.marketInputs.currentPrice.toLocaleString()}
+            Current price:{" "}
+            {formatPerShare(company.marketInputs.currentPrice, {
+              currency: company.currencies.valuationCurrency,
+            })}
           </p>
           <p className="cardMeta">
-            Market cap: {company.marketInputs.marketCap.toLocaleString()}
+            Market cap (m):{" "}
+            {formatAmountMillions(company.marketInputs.marketCap, {
+              valueScale: "absolute",
+              currency: company.currencies.valuationCurrency,
+            })}
           </p>
-          <p className="cardMeta">Riskfree rate: {company.riskWaccInputs.riskfreeRate}</p>
+          <p className="cardMeta">
+            Riskfree rate: {formatPercent(company.riskWaccInputs.riskfreeRate)}
+          </p>
         </article>
         <article className="card">
           <h3 className="cardTitle">Industry Benchmark Config Scaffold</h3>
@@ -157,39 +473,62 @@ export default async function CompanyWorkspacePage({
             Configured benchmark universe count: {benchmarkUniverse.data.length}
           </p>
         </article>
+        <BetaReferenceCard
+          selectedBenchmark={selectedBenchmark}
+          lookup={betaLookup}
+          readiness={betaReadiness}
+        />
+        <BetaPolicyCard policy={betaPolicy} showMockCapitalNote={hasMockBetaPolicyInputs} />
+        <WaccFoundationCard
+          input={waccInput}
+          readiness={waccReadiness}
+          result={waccResult}
+          showMockScaffoldNote={hasMockWaccScaffoldInputs}
+        />
+        <ForecastFadeFoundationCard input={forecastFadeInput} result={forecastFadeResult} />
+        <ReinvestmentFcffFoundationCard
+          input={reinvestmentFcffInput}
+          result={reinvestmentFcffResult}
+        />
+        <TerminalValueFoundationCard
+          input={terminalValueInput}
+          result={terminalValueResult}
+        />
+        <DcfPvFoundationCard input={dcfPvInput} result={dcfPvResult} />
+        <EquityBridgeFoundationCard input={equityBridgeInput} result={equityBridgeResult} />
+        <IntrinsicValueFoundationCard
+          input={intrinsicValueInput}
+          result={intrinsicValueResult}
+        />
         <article className="card">
           <h3 className="cardTitle">Historical Data</h3>
           <p className="cardMeta">Periods: {company.availableHistoricalPeriods.join(", ")}</p>
           <p className="cardMeta">
-            LTM Revenue: {company.historicalData.incomeStatement.revenue.LTM.toLocaleString()}
+            LTM Revenue (m):{" "}
+            {formatAmountMillions(company.historicalData.incomeStatement.revenue.LTM, {
+              currency: company.currencies.reportingCurrency,
+            })}
           </p>
           <p className="cardMeta">
-            LTM FCF: {company.historicalData.cashFlow.freeCashFlow.LTM.toLocaleString()}
+            LTM FCF (m):{" "}
+            {formatAmountMillions(company.historicalData.cashFlow.freeCashFlow.LTM, {
+              currency: company.currencies.reportingCurrency,
+            })}
           </p>
         </article>
         <article className="card">
           <h3 className="cardTitle">Forecast Data</h3>
           <p className="cardMeta">
-            Y+1 growth: {company.forecastData.baseCaseRevenueGrowthByPeriod.YEAR_PLUS_1}
+            Y+1 growth:{" "}
+            {formatPercent(company.forecastData.baseCaseRevenueGrowthByPeriod.YEAR_PLUS_1)}
           </p>
           <p className="cardMeta">
-            Y+3 margin: {company.forecastData.baseCaseOperatingMarginByPeriod.YEAR_PLUS_3}
+            Y+3 margin:{" "}
+            {formatPercent(company.forecastData.baseCaseOperatingMarginByPeriod.YEAR_PLUS_3)}
           </p>
           <p className="cardMeta">{company.forecastData.narrative}</p>
         </article>
-        <article className="card">
-          <h3 className="cardTitle">Valuation Engines</h3>
-          <p className="cardMeta">
-            WACC: {company.valuationResult.riskWaccResult.wacc.toFixed(3)}
-          </p>
-          <p className="cardMeta">
-            Intrinsic value/share:{" "}
-            {company.valuationResult.perShareValuationResult.intrinsicValuePerShare}
-          </p>
-          <p className="cardMeta">
-            Terminal method: {company.valuationResult.terminalValueResult.terminalMethod}
-          </p>
-        </article>
+        <ValuationEnginesStatusCard />
         <article className="card">
           <h3 className="cardTitle">Review & Decision</h3>
           <p className="cardMeta">Worst severity: {company.reviewSummary.worstSeverity}</p>
@@ -218,9 +557,6 @@ export default async function CompanyWorkspacePage({
         </p>
         <p>
           <strong>Last updated:</strong> {company.lastUpdated}
-        </p>
-        <p style={{ marginTop: "0.75rem" }}>
-          <Link href="/companies">Back to Companies</Link>
         </p>
       </div>
     </section>

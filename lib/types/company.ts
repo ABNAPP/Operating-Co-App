@@ -1,3 +1,6 @@
+import type { CompanyBetaPolicyInputs } from "@/lib/types/beta-engine";
+import type { CompanyIntrinsicValueFoundationInputs } from "@/lib/types/intrinsic-value-engine";
+import type { CompanyWaccFoundationInputs } from "@/lib/types/wacc-engine";
 import type { CurrencyConfig } from "@/lib/types/currency";
 import type {
   AccountingAdjustmentInputs,
@@ -79,6 +82,12 @@ export interface CompanyDataModel {
   leaseInputs: LeaseInputs;
   forecastInputs: ForecastInputs;
   riskWaccInputs: RiskWaccInputs;
+  /** Beta relevering / selected-beta policy inputs (benchmark-first; not ISM-driven). */
+  betaPolicyInputs?: CompanyBetaPolicyInputs;
+  /** WACC foundation scaffold inputs (explicit mock; not ISM-driven). */
+  waccFoundationInputs?: CompanyWaccFoundationInputs;
+  /** Intrinsic value / share foundation scaffold (explicit share unit + diluted shares; not ISM-driven). */
+  intrinsicValueFoundationInputs?: CompanyIntrinsicValueFoundationInputs;
   terminalValueInputs: TerminalValueInputs;
   decisionLayerInputs: DecisionLayerInputs;
   scenarioSensitivityInputs: ScenarioSensitivityInputs;

@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { getCompanies } from "@/lib/firestore/repositories/companiesRepository";
+import { getIndustryISMDisplayMapTable } from "@/lib/firestore/repositories/sectorIndustryMappingRepository";
 
 export default async function CompaniesPage() {
   const { data: companies, source } = await getCompanies();
+  const ismDisplayMapResult = await getIndustryISMDisplayMapTable();
+  const ismDisplayByBenchmark = new Map(
+    ismDisplayMapResult.data.map((row) => [row.damodaranIndustrialBenchmark, row]),
+  );
 
   return (
     <section className="pageSection">
@@ -31,7 +36,13 @@ export default async function CompaniesPage() {
             <h3 className="cardTitle">{company.identity.companyName}</h3>
             <p className="cardMeta">{company.identity.fullTicker}</p>
             <p className="cardMeta">
-              Industry: {company.identity.damodaranIndustrialBenchmark} (ISM: {company.identity.ismSector})
+              Industry Benchmark: {company.identity.damodaranIndustrialBenchmark}
+            </p>
+            <p className="cardMeta">
+              ISM-sector:{" "}
+              {ismDisplayByBenchmark.get(company.identity.damodaranIndustrialBenchmark)
+                ?.ismSectorDisplay ?? company.identity.ismSector}{" "}
+              (display-only)
             </p>
             <p className="cardMeta">
               Decision: {company.valuationResult.decisionResult.decisionStatus}

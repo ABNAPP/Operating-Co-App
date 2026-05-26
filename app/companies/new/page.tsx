@@ -1,6 +1,9 @@
+import { BackLink } from "@/components/back-link";
+
 export default function NewCompanyPage() {
   return (
     <section className="pageSection">
+      <BackLink href="/companies" label="Back to Companies" />
       <div>
         <h2 className="sectionHeading">Create New Company</h2>
         <p className="sectionSubheading">

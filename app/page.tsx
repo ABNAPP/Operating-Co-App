@@ -2,6 +2,12 @@ import Link from "next/link";
 import { getDashboardRows } from "@/lib/firestore/repositories/dashboardRepository";
 import { getIndustryISMDisplayMapTable } from "@/lib/firestore/repositories/sectorIndustryMappingRepository";
 import type { ReviewSeverity } from "@/lib/types";
+import {
+  formatAmountMillions,
+  formatNumber,
+  formatPercent,
+  formatPerShare,
+} from "@/lib/utils/formatters";
 
 export default async function Home() {
   const [{ data: rows, source }, ismDisplayTable] = await Promise.all([
@@ -11,21 +17,6 @@ export default async function Home() {
   const ismByBenchmark = new Map(
     ismDisplayTable.data.map((row) => [row.damodaranIndustrialBenchmark, row.ismSectorDisplay]),
   );
-
-  const formatCurrency = (value: number, currency = "USD") =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 2,
-    }).format(value);
-
-  const formatMarketCap = (value: number, currency = "USD") =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-      notation: "compact",
-      maximumFractionDigits: 2,
-    }).format(value);
 
   const flagClass = (flag: ReviewSeverity) => {
     if (flag === "Info") return "badge badgeGreen";
@@ -51,7 +42,7 @@ export default async function Home() {
               <th>Ticker</th>
               <th>Price</th>
               <th>Intrinsic Value / Share</th>
-              <th>Market Cap</th>
+              <th>Market Cap (m)</th>
               <th>Industry Benchmark</th>
               <th>Final MOS</th>
               <th>Decision</th>
@@ -69,11 +60,20 @@ export default async function Home() {
                 <td>
                   {company.ticker}:{company.exchange}
                 </td>
-                <td>{formatCurrency(company.currentPrice, company.valuationCurrency)}</td>
                 <td>
-                  {formatCurrency(company.intrinsicValuePerShare, company.valuationCurrency)}
+                  {formatPerShare(company.currentPrice, { currency: company.valuationCurrency })}
                 </td>
-                <td>{formatMarketCap(company.marketCap, company.valuationCurrency)}</td>
+                <td>
+                  {formatPerShare(company.intrinsicValuePerShare, {
+                    currency: company.valuationCurrency,
+                  })}
+                </td>
+                <td>
+                  {formatAmountMillions(company.marketCap, {
+                    valueScale: "absolute",
+                    currency: company.valuationCurrency,
+                  })}
+                </td>
                 <td>
                   {company.damodaranIndustrialBenchmark}
                   {ismByBenchmark.get(company.damodaranIndustrialBenchmark)
@@ -82,13 +82,13 @@ export default async function Home() {
                       ? ` (ISM: ${company.ismSector})`
                       : ""}
                 </td>
-                <td>{(company.finalMOS * 100).toFixed(2)}%</td>
+                <td>{formatPercent(company.finalMOS)}</td>
                 <td>{company.decisionStatus}</td>
                 <td>
                   <span className={flagClass(company.reviewFlag)}>{company.reviewFlag}</span>
                 </td>
-                <td>{company.beta.toFixed(2)}</td>
-                <td>{(company.wacc * 100).toFixed(2)}%</td>
+                <td>{formatNumber(company.beta)}</td>
+                <td>{formatPercent(company.wacc)}</td>
               </tr>
             ))}
           </tbody>

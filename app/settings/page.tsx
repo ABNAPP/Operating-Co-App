@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { ClickableCardLink } from "@/components/clickable-card";
 import { runDailyDataRefresh } from "@/lib/data-hub/dailyRefreshService";
 import { seedMockCompanies } from "@/lib/firestore/repositories/companiesRepository";
 import {
@@ -83,6 +84,15 @@ export default async function SettingsPage() {
       </div>
 
       <div className="cardGrid">
+        <ClickableCardLink href="/engine-docs/flowchart" title="Flowchart">
+          <h3 className="cardTitle">Flowchart</h3>
+          <p className="cardMeta">
+            App build map, valuation flow and current phase status.
+          </p>
+          <p className="cardMeta">
+            Status: <span className="badge badgeYellow">Active / In progress</span>
+          </p>
+        </ClickableCardLink>
         <article className="card">
           <h3 className="cardTitle">Environment Variables</h3>
           <p className="cardMeta">

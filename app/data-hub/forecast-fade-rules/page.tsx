@@ -1,8 +1,10 @@
+import { BackLink } from "@/components/back-link";
 import { forecastFadeRules } from "@/lib/mock-reference-data";
 
 export default function ForecastFadeRulesPage() {
   return (
     <section className="pageSection">
+      <BackLink href="/data-hub" label="Back to Data Hub" />
       <div>
         <h2 className="sectionHeading">Forecast & Fade Rules</h2>
         <p className="sectionSubheading">

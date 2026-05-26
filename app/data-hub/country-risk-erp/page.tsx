@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/back-link";
 import {
   getCountryRegionalGroupMap,
   getCountryErpRows,
@@ -7,6 +8,7 @@ import {
   getRegionalErpRows,
   getWeightedErpFormulaGuide,
 } from "@/lib/firestore/repositories/countryRiskErpRepository";
+import { formatPercent } from "@/lib/utils/formatters";
 
 export const dynamic = "force-dynamic";
 
@@ -36,9 +38,6 @@ export default async function CountryRiskErpPage({ searchParams }: CountryRiskEr
 
   const sourceNote = sourceNotesResult.data[0];
   const importStatus = importStatusResult.data;
-
-  const formatPercent = (value: number | null) =>
-    value === null ? "N/A" : `${(value * 100).toFixed(2)}%`;
 
   const filteredCountryRows = countryRowsResult.data.filter((row) => {
     const matchesQuery =
@@ -73,6 +72,7 @@ export default async function CountryRiskErpPage({ searchParams }: CountryRiskEr
 
   return (
     <section className="pageSection">
+      <BackLink href="/data-hub" label="Back to Data Hub" />
       <div>
         <h2 className="sectionHeading">Country Risk / ERP</h2>
         <p className="sectionSubheading">
@@ -238,7 +238,7 @@ export default async function CountryRiskErpPage({ searchParams }: CountryRiskEr
                   <td>{formatPercent(row.corporateTaxRate)}</td>
                   <td>{row.countryCount}</td>
                   <td>{row.activeMappingCount}</td>
-                  <td>{(row.dataCoveragePct * 100).toFixed(1)}%</td>
+                  <td>{formatPercent(row.dataCoveragePct)}</td>
                   <td>{row.status}</td>
                   <td>{row.notes}</td>
                 </tr>

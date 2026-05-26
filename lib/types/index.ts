@@ -1,3 +1,4 @@
+export * from "@/lib/types/beta-engine";
 export * from "@/lib/types/company";
 export * from "@/lib/types/country-risk-erp";
 export * from "@/lib/types/currency";
@@ -9,3 +10,4 @@ export * from "@/lib/types/reference-data";
 export * from "@/lib/types/review-flags";
 export * from "@/lib/types/sector-industry-mapping";
 export * from "@/lib/types/valuation-results";
+export * from "@/lib/types/wacc-engine";

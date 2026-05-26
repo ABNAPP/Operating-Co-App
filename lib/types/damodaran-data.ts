@@ -1,9 +1,28 @@
-export type DamodaranDatasetPriority = "Core" | "Support" | "Optional" | "Advanced";
+export type DamodaranDatasetPriority =
+  | "Core"
+  | "Core Support"
+  | "Strong Support"
+  | "Pricing Sanity Only"
+  | "Support"
+  | "Optional"
+  | "Advanced"
+  | "Missing / Deferred";
+
+export type DamodaranDatasetClassification =
+  | "Core Required"
+  | "Core Support"
+  | "Strong Support"
+  | "Pricing Sanity Only"
+  | "Support"
+  | "Optional"
+  | "Advanced"
+  | "Missing / Deferred";
 
 export type DamodaranImportStatus =
   | "Not Imported"
   | "Imported"
   | "Missing Local File"
+  | "Missing / Deferred"
   | "Import Error"
   | "Review"
   | "Stale";
@@ -11,9 +30,13 @@ export type DamodaranImportStatus =
 export interface DamodaranDatasetRegisterRow {
   id: string;
   datasetName: string;
+  workbookTableName: string;
   fileName: string;
   dataCategory: string;
   priority: DamodaranDatasetPriority;
+  classification: DamodaranDatasetClassification;
+  blocksCoreReadiness: boolean;
+  pricingSanityOnly: boolean;
   usedBy: string;
   sourceName: string;
   sourceUrl: string;
@@ -25,6 +48,8 @@ export interface DamodaranDatasetRegisterRow {
   industryCount: number;
   detectedColumns?: string[];
   notes: string;
+  roicSupportNote?: string;
+  isDeferredPlaceholder?: boolean;
 }
 
 export interface DamodaranRawDatasetRow {

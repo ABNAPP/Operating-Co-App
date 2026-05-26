@@ -2,7 +2,7 @@
 
 | Spec Area | Status | Notes |
 | --- | --- | --- |
-| App shell and navigation | Done (Phase 1) | Dashboard, Companies, Workspace, Data Hub, Engine Docs, Settings |
+| App shell and navigation | Done (Phase 1) | Dashboard, Companies, Data Hub, Engine Docs, Settings; workspace via `/companies/[cleanTicker]` |
 | Dashboard display-only rule | Done (Phase 0/1) | Dashboard implemented as output table with no valuation computation |
 | Global vs company engine rule | Done (Phase 0/1) | Documented in architecture and valuation-flow docs |
 | Company Workspace structure | Done (Phase 1) | Snapshot, Inputs, Historical, Forecast, Engines, Review/Decision, Notes/Sources placeholders |
@@ -105,6 +105,46 @@
 | Seven exact benchmark tables in Data Hub | Built (Phase 4C-2B-6) | Data Hub now shows all required `tbl*` Industry Benchmark Config tables as source-of-truth |
 | Generated candidate mapping source-of-truth policy | Built (Phase 4C-2B-6) | Generated/helper mapping is explicitly labeled internal only and not source-of-truth |
 | Pull keys source-of-truth table | Built (Phase 4C-2B-6) | Pull keys are read from exact `tblBenchmarkDataPullKeys` |
+| Damodaran v1.5 classification bridge | Built (Phase 4C-2B-7) | Registry uses v1.5 classifications; pricing sanity does not block readiness |
+| Damodaran pull-key dataset resolver | Built (Phase 4C-2B-7) | Static map from pull-key types to dataset registry IDs (no numeric engine extraction) |
+| Damodaran universe cross-check | Built (Phase 4C-2B-7) | Canonical industries compared to exact `tblDamodaranIndustryUniverse` |
+| Damodaran Beta/WACC numeric extraction | Not Started | Pending after bridge; no Cost of Equity/WACC math in Data Hub |
+| Settings Flowchart card | Built (Phase 4C-2B-8) | Clickable card in Settings → `/engine-docs/flowchart`; navigation/docs only |
+| App build flowchart page | Built (Phase 4C-2B-8) | Build status, main flow, Data Hub flow, rules; data in `lib/build-flow/buildPhases.ts` |
+| Beta Engine Foundation | Built (Phase 4C-2B-9) | Benchmark beta reference lookup + readiness; `damodaran_beta_global`; no WACC/Cost of Equity |
+| Beta relevering / selected beta | Built (Phase 4C-2B-10) | `betaPolicyService` + Company Workspace policy card; relevering formula only |
+| Beta policy QA script | Built (Phase 4C-2B-10) | `scripts/qa-beta-policy.mjs` |
+| WACC Engine Foundation | Built (Phase 4C-2B-11) | CoE + WACC foundation; not connected to valuation outputs |
+| WACC foundation QA script | Built (Phase 4C-2B-11) | `scripts/qa-wacc-foundation.mjs` |
+| WACC Engine docs page | Built (Phase 4C-2B-11) | `/engine-docs/wacc-engine` |
+| Company Workspace WACC card | Built (Phase 4C-2B-11) | WACC Foundation on `/companies/[cleanTicker]` |
+| Forecast & Fade Engine Foundation | Built (Phase 4C-2B-12) | Stage/history/cyclicality readiness; no forecast or FCFF math |
+| Forecast & Fade foundation QA script | Built (Phase 4C-2B-12) | `scripts/qa-forecast-fade-foundation.mjs` |
+| Forecast & Fade Engine docs page | Built (Phase 4C-2B-12) | `/engine-docs/forecast-fade-engine` |
+| Company Workspace Forecast & Fade card | Built (Phase 4C-2B-12) | Forecast & Fade Foundation on `/companies/[cleanTicker]` |
+| Reinvestment / FCFF Engine Foundation | Built (Phase 4C-2B-13) | NOPAT, reinvestment, FCFF; no terminal, DCF/PV, bridge, or intrinsic math |
+| Reinvestment / FCFF foundation QA script | Built (Phase 4C-2B-13) | `scripts/qa-reinvestment-fcff-foundation.mjs` |
+| Reinvestment / FCFF Engine docs page | Built (Phase 4C-2B-13) | `/engine-docs/reinvestment-fcff-engine` |
+| Company Workspace Reinvestment / FCFF card | Built (Phase 4C-2B-13) | Reinvestment / FCFF Foundation on `/companies/[cleanTicker]` |
+| Terminal Value Engine Foundation | Built (Phase 4C-2B-14) | Terminal FCFF + Gordon terminal value only (no discounting); no DCF/PV, bridge, or intrinsic math |
+| Terminal Value foundation QA script | Built (Phase 4C-2B-14) | `scripts/qa-terminal-value-foundation.mjs` |
+| Terminal Value Engine docs page | Built (Phase 4C-2B-14) | `/engine-docs/terminal-value-engine` |
+| Company Workspace Terminal Value card | Built (Phase 4C-2B-14) | Terminal Value Foundation on `/companies/[cleanTicker]` |
+| DCF / PV Engine Foundation | Built (Phase 4C-2B-15) | PV of forecast FCFF, PV of terminal value, and Value of Operating Assets only (no discounting to equity/decisions) |
+| DCF / PV foundation QA script | Built (Phase 4C-2B-15) | `scripts/qa-dcf-pv-foundation.mjs` |
+| DCF / PV Engine docs page | Built (Phase 4C-2B-15) | `/engine-docs/dcf-pv-engine` |
+| Company Workspace DCF / PV card | Built (Phase 4C-2B-15) | DCF / PV Foundation on `/companies/[cleanTicker]` |
+| Firm-to-Equity Bridge Engine Foundation | Built (Phase 4C-2B-16) | Equity Value from operating assets + explicit bridge adjustments only (no intrinsic/share) |
+| Firm-to-Equity Bridge foundation QA script | Built (Phase 4C-2B-16) | `scripts/qa-equity-bridge-foundation.mjs` |
+| Firm-to-Equity Bridge Engine docs page | Built (Phase 4C-2B-16) | `/engine-docs/equity-bridge-engine` |
+| Company Workspace Firm-to-Equity Bridge card | Built (Phase 4C-2B-16) | Firm-to-Equity Bridge Foundation on `/companies/[cleanTicker]` |
+| Intrinsic Value / Share Engine Foundation | Built (Phase 4C-2B-17) | Per-share value from Equity Value + explicit share unit/shares only |
+| Intrinsic Value / Share foundation QA script | Built (Phase 4C-2B-17) | `scripts/qa-intrinsic-value-foundation.mjs` |
+| Intrinsic Value / Share Engine docs page | Built (Phase 4C-2B-17) | `/engine-docs/intrinsic-value-engine` |
+| Company Workspace Intrinsic Value / Share card | Built (Phase 4C-2B-17) | Intrinsic Value / Share Foundation on `/companies/[cleanTicker]` |
+| Beta reference service | Built (Phase 4C-2B-9) | `lib/engines/beta/betaReferenceService.ts` — read-only, no raw data mutation |
+| Company Workspace beta card | Built (Phase 4C-2B-9) | Beta Reference / Beta Readiness on `/companies/[cleanTicker]` |
+| Beta Engine docs page | Built (Phase 4C-2B-9) | `/engine-docs/beta-engine` — foundation scope and rules |
 | Global valuation calculations | Not Started | Deferred to later phase |
 | API integrations (FRED/market/FX) | Not Started | Deferred; no live API calls |
 | Real review logic execution | Not Started | Deferred; severity model currently structural only |

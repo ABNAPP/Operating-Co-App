@@ -3,7 +3,11 @@ import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import * as XLSX from "xlsx";
-import { damodaranDatasetRegistry } from "@/lib/data-hub/damodaranDatasetRegistry";
+import {
+  coreDamodaranFileNames,
+  damodaranDatasetRegistry,
+  pricingSanityDamodaranFileNames,
+} from "@/lib/data-hub/damodaranDatasetRegistry";
 import type {
   DamodaranDatasetCoverageRow,
   DamodaranDatasetRegisterRow,
@@ -21,12 +25,8 @@ const INDUSTRY_HEADER_ALIASES = [
   "industry name:",
   "industrial benchmark",
 ];
-const MULTIPLES_FILE_NAMES = new Set([
-  "pbvGlobal.xls",
-  "peGlobal.xls",
-  "psGlobal.xls",
-  "vebitdaGlobal.xls",
-]);
+const MULTIPLES_FILE_NAMES = new Set(pricingSanityDamodaranFileNames);
+const READINESS_BLOCKING_FILE_NAMES = new Set(coreDamodaranFileNames);
 
 interface ParsedDatasetMeta {
   rowCount: number;
@@ -232,6 +232,190 @@ function extractIndustryValues(
   return { parsedRowCount, uniqueIndustries, rawDatasetRows };
 }
 
+function extractNonIndustryLabelValues(params: {
+  rawRows: unknown[][];
+  startRowIndex: number;
+  labelColumnIndex: number;
+  detectedColumns: string[];
+  dataset: DamodaranDatasetRegisterRow;
+  importedLastUpdated: string;
+}): {
+  parsedRowCount: number;
+  uniqueIndustries: string[];
+  rawDatasetRows: DamodaranRawDatasetRow[];
+} {
+  const {
+    rawRows,
+    startRowIndex,
+    labelColumnIndex,
+    detectedColumns,
+    dataset,
+    importedLastUpdated,
+  } = params;
+
+  const values: string[] = [];
+  const rawDatasetRows: DamodaranRawDatasetRow[] = [];
+  let parsedRowCount = 0;
+
+  for (let rowIndex = startRowIndex; rowIndex < rawRows.length; rowIndex++) {
+    const row = rawRows[rowIndex] ?? [];
+    const labelRaw = String(row[labelColumnIndex] ?? "").trim();
+    const hasAnyData = row.some((cell) => String(cell ?? "").trim().length > 0);
+
+    if (!hasAnyData) continue;
+    if (!labelRaw) continue;
+
+    const valuesMap: Record<string, string | number | null> = {};
+    const columnCount = Math.max(detectedColumns.length, row.length);
+
+    for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+      const columnName = detectedColumns[columnIndex] || `column_${columnIndex + 1}`;
+      const cellValue = row[columnIndex];
+      if (typeof cellValue === "number") {
+        valuesMap[columnName] = Number.isFinite(cellValue) ? cellValue : null;
+      } else if (typeof cellValue === "string") {
+        const trimmed = cellValue.trim();
+        valuesMap[columnName] = trimmed.length > 0 ? trimmed : null;
+      } else if (cellValue === null || cellValue === undefined) {
+        valuesMap[columnName] = null;
+      } else {
+        valuesMap[columnName] = String(cellValue);
+      }
+    }
+
+    parsedRowCount++;
+    values.push(labelRaw);
+    rawDatasetRows.push({
+      id: `${dataset.id}_row_${parsedRowCount}`,
+      datasetId: dataset.id,
+      datasetName: dataset.datasetName,
+      fileName: dataset.fileName,
+      rowIndex: parsedRowCount,
+      industryName: labelRaw,
+      normalizedIndustryName: normalizeIndustryName(labelRaw),
+      values: valuesMap,
+      detectedColumns,
+      sourceName: dataset.sourceName,
+      sourceUrl: dataset.sourceUrl,
+      downloadUrl: dataset.downloadUrl,
+      sourceUpdateDate: dataset.sourceUpdateDate,
+      importedLastUpdated,
+      status: "Imported",
+      notes: "Parsed from local Damodaran workbook (non-industry reference table).",
+    });
+  }
+
+  const uniqueIndustries = Array.from(new Set(values));
+  return { parsedRowCount, uniqueIndustries, rawDatasetRows };
+}
+
+function parseCountryTaxRatesSheet(params: {
+  sheetRows: unknown[][];
+  dataset: DamodaranDatasetRegisterRow;
+  importedLastUpdated: string;
+}): {
+  parsedRowCount: number;
+  uniqueIndustries: string[];
+  detectedColumns: string[];
+  rawDatasetRows: DamodaranRawDatasetRow[];
+} | null {
+  const { sheetRows, dataset, importedLastUpdated } = params;
+
+  const scanLimit = Math.min(sheetRows.length, 40);
+  let headerRowIndex = -1;
+
+  for (let rowIndex = 0; rowIndex < scanLimit; rowIndex++) {
+    const row = sheetRows[rowIndex] ?? [];
+    const firstCell = String(row[0] ?? "").trim().toLowerCase();
+    const hasCountryHeader = firstCell.includes("country");
+    const hasCorporateTaxRateHeader = row.some((cell) =>
+      String(cell ?? "").trim().toLowerCase().includes("corporate tax rate"),
+    );
+
+    if (hasCountryHeader && hasCorporateTaxRateHeader) {
+      headerRowIndex = rowIndex;
+      break;
+    }
+  }
+
+  if (headerRowIndex < 0) return null;
+
+  const headerRow = (sheetRows[headerRowIndex] ?? []).map((cell) => String(cell ?? "").trim());
+  const detectedColumns = headerRow.map((item, index) => item || `column_${index + 1}`);
+
+  const extracted = extractNonIndustryLabelValues({
+    rawRows: sheetRows,
+    startRowIndex: headerRowIndex + 1,
+    labelColumnIndex: 0,
+    detectedColumns,
+    dataset,
+    importedLastUpdated,
+  });
+
+  return {
+    parsedRowCount: extracted.parsedRowCount,
+    uniqueIndustries: extracted.uniqueIndustries,
+    detectedColumns,
+    rawDatasetRows: extracted.rawDatasetRows,
+  };
+}
+
+function parseRatingsSheet(params: {
+  sheetRows: unknown[][];
+  dataset: DamodaranDatasetRegisterRow;
+  importedLastUpdated: string;
+}): {
+  parsedRowCount: number;
+  uniqueIndustries: string[];
+  detectedColumns: string[];
+  rawDatasetRows: DamodaranRawDatasetRow[];
+} | null {
+  const { sheetRows, dataset, importedLastUpdated } = params;
+
+  // Operating Leases sheet has a small table header ("Year", "Commitment").
+  const scanLimit = Math.min(sheetRows.length, 60);
+  let headerRowIndex = -1;
+
+  for (let rowIndex = 0; rowIndex < scanLimit; rowIndex++) {
+    const row = sheetRows[rowIndex] ?? [];
+    const hasYear = row.some((cell) => String(cell ?? "").trim().toLowerCase().includes("year"));
+    const hasCommitment = row.some((cell) =>
+      String(cell ?? "").trim().toLowerCase().includes("commit"),
+    );
+    if (hasYear && hasCommitment) {
+      headerRowIndex = rowIndex;
+      break;
+    }
+  }
+
+  const detectedColumns =
+    headerRowIndex >= 0
+      ? (sheetRows[headerRowIndex] ?? []).map((cell) => String(cell ?? "").trim())
+          .map((item, index) => item || `column_${index + 1}`)
+      : Array.from(
+          { length: Math.max(...sheetRows.slice(0, 80).map((r) => (r ?? []).length), 1) },
+          (_, index) => `column_${index + 1}`,
+        );
+
+  const startRowIndex = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
+
+  const extracted = extractNonIndustryLabelValues({
+    rawRows: sheetRows,
+    startRowIndex,
+    labelColumnIndex: 0,
+    detectedColumns,
+    dataset,
+    importedLastUpdated,
+  });
+
+  return {
+    parsedRowCount: extracted.parsedRowCount,
+    uniqueIndustries: extracted.uniqueIndustries,
+    detectedColumns,
+    rawDatasetRows: extracted.rawDatasetRows,
+  };
+}
+
 async function parseDamodaranWorkbook(
   filePath: string,
   dataset: DamodaranDatasetRegisterRow,
@@ -269,6 +453,25 @@ async function parseDamodaranWorkbook(
 
     const headerMatch = findHeaderRowWithIndustry(rows);
     if (!headerMatch) {
+      const nonIndustryParsed =
+        dataset.id === "damodaran_country_tax_rates"
+          ? parseCountryTaxRatesSheet({
+              sheetRows: rows,
+              dataset,
+              importedLastUpdated,
+            })
+          : dataset.id === "damodaran_ratings"
+            ? parseRatingsSheet({ sheetRows: rows, dataset, importedLastUpdated })
+            : null;
+
+      if (!nonIndustryParsed) continue;
+
+      const { parsedRowCount, uniqueIndustries, rawDatasetRows, detectedColumns: sheetDetectedColumns } =
+        nonIndustryParsed;
+      sheetDetectedColumns.forEach((item) => detectedColumns.add(item));
+      rowCount += parsedRowCount;
+      uniqueIndustries.forEach((name) => industryNames.add(name));
+      rawDatasetRows.forEach((row) => rawRows.push(row));
       continue;
     }
 
@@ -352,6 +555,10 @@ function buildCoverageRowsFromRegister(
       MULTIPLES_FILE_NAMES.has(fileName),
     );
 
+    const histgrAvailable = value.fileNames.has("histgrGlobal.xls");
+    const debtAvailable = value.fileNames.has("debtdetailsGlobal.xls");
+    const leaseAvailable = value.fileNames.has("leaseeffectGlobal.xls");
+
     const availableCoreCount = [
       betaAvailable,
       waccAvailable,
@@ -360,11 +567,13 @@ function buildCoverageRowsFromRegister(
       workingCapitalAvailable,
       fundgrEbAvailable,
       taxRateAvailable,
-      multiplesAvailable,
+      histgrAvailable,
+      debtAvailable,
+      leaseAvailable,
     ].filter(Boolean).length;
 
     const coverageStatus: DamodaranDatasetCoverageRow["coverageStatus"] =
-      availableCoreCount === 8
+      availableCoreCount >= 8
         ? "Complete"
         : availableCoreCount === 0
           ? "Missing Core Data"
@@ -398,7 +607,7 @@ function buildIndustryMasterRows(
   registerRows: DamodaranDatasetRegisterRow[],
 ): DamodaranIndustryMasterRow[] {
   const coreImportedFileNames = registerRows
-    .filter((row) => row.priority === "Core" && row.importStatus === "Imported")
+    .filter((row) => row.blocksCoreReadiness && row.importStatus === "Imported")
     .map((row) => row.fileName);
 
   return coverageRows.map((coverageRow) => {
@@ -435,7 +644,10 @@ function buildIndustryMasterRows(
         return !coverageRow.taxRateAvailable;
       }
       if (MULTIPLES_FILE_NAMES.has(fileName)) {
-        return !coverageRow.multiplesAvailable;
+        return false;
+      }
+      if (!READINESS_BLOCKING_FILE_NAMES.has(fileName)) {
+        return false;
       }
       return !presentInDatasets.includes(fileName);
     });
@@ -506,6 +718,15 @@ export async function buildDamodaranDataVaultFromLocalFiles(): Promise<RefreshCo
       detectedColumns: [],
       notes: baseDataset.notes,
     };
+
+    if (baseDataset.isDeferredPlaceholder) {
+      nextRow.importStatus = "Missing / Deferred";
+      nextRow.importedLastUpdated = null;
+      nextRow.rowCount = 0;
+      nextRow.industryCount = 0;
+      registerRows.push(nextRow);
+      continue;
+    }
 
     try {
       await fs.access(filePath);

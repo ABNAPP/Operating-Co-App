@@ -6,19 +6,18 @@ import type {
   DamodaranRawDatasetRow,
 } from "@/lib/types";
 
+/** v1.5 engine-support datasets that gate canonical coverage (excludes pricing sanity & optional). */
 const CORE_DATASET_KEYS = [
   { id: "betaGlobal", aliases: ["beta", "unlevered beta", "levered beta"] },
   { id: "marginGlobal", aliases: ["margin"] },
   { id: "capexGlobal", aliases: ["capex"] },
   { id: "waccGlobal", aliases: ["wacc", "cost of capital"] },
   { id: "wcdataGlobal", aliases: ["working capital", "wcdata"] },
-  { id: "fundgrEBGlobal", aliases: ["fundgr", "fundamental growth"] },
+  { id: "fundgrEBGlobal", aliases: ["fundgr", "fundamental growth", "fundgreb"] },
   { id: "taxrateGlobal", aliases: ["tax rate", "taxrate"] },
-  { id: "pbvdataGlobal", aliases: ["pbv", "price to book"] },
-  { id: "pedataGlobal", aliases: ["pe", "p/e", "price earnings"] },
-  { id: "psdataGlobal", aliases: ["ps", "p/s", "price to sales"] },
-  { id: "evdataGlobal", aliases: ["ev", "enterprise value"] },
-  { id: "divfcfeGlobal", aliases: ["fcfe", "dividend"] },
+  { id: "histgrGlobal", aliases: ["histgr", "historical growth"] },
+  { id: "debtdetailsGlobal", aliases: ["debt"] },
+  { id: "leaseeffectGlobal", aliases: ["lease"] },
 ] as const;
 
 const NON_INDUSTRY_DATASET_HINTS = ["countrytaxrates", "countrystats", "ratings"];
@@ -152,7 +151,6 @@ export function buildCanonicalDamodaranIndustryList(input: CanonicalBuildInput) 
           coverageRow.workingCapitalAvailable ? "wcdataGlobal" : null,
           coverageRow.fundgrEbAvailable ? "fundgrEBGlobal" : null,
           coverageRow.taxRateAvailable ? "taxrateGlobal" : null,
-          coverageRow.multiplesAvailable ? "pedataGlobal" : null,
         ].filter((item): item is string => Boolean(item))
       : [];
     const presentInCoreDatasets = Array.from(

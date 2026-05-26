@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/back-link";
 import {
   getBenchmarkDataPullKeysTable,
   getDamodaranIndustryUniverse,
@@ -57,6 +58,7 @@ export default async function SectorIndustryMappingPage() {
 
   return (
     <section className="pageSection">
+      <BackLink href="/data-hub" label="Back to Data Hub" />
       <div>
         <h2 className="sectionHeading">Industry Benchmark Config</h2>
         <p className="sectionSubheading">

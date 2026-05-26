@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/back-link";
 import { getDailyRefreshStatus } from "@/lib/firestore/repositories/referenceDataRepository";
 
 export default async function RefreshStatusPage() {
@@ -10,6 +11,7 @@ export default async function RefreshStatusPage() {
 
   return (
     <section className="pageSection">
+      <BackLink href="/data-hub" label="Back to Data Hub" />
       <div>
         <h2 className="sectionHeading">Refresh Status</h2>
         <p className="sectionSubheading">

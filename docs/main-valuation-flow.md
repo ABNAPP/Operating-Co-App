@@ -103,6 +103,49 @@ Input -> Reference Data -> Global Valuation Engine -> Company Valuation Engine R
   - generated/candidate mapping remains internal helper only
   - pull keys come from `tblBenchmarkDataPullKeys`
   - ISM map remains display-only (`Display only - no model-driving effect`)
+- Phase 4C-2B-7 aligns Damodaran Data with v1.5 before Beta/WACC:
+  - registry classifications and readiness gates updated
+  - pull-key resolver maps config keys to Damodaran dataset registry (no numeric extraction yet)
+  - pricing multiples remain sanity-only and do not block readiness
+  - Damodaran Data feeds Industry Benchmark Config; ISM-sector is not part of Damodaran Data logic
+- Phase 4C-2B-10 adds Beta relevering and selected beta policy (beta-only):
+  - unlevered reference → company D/E and tax → relevered / selected beta
+  - no Cost of Equity, WACC, or valuation outputs
+  - ISM-sector not used
+- Phase 4C-2B-11 adds WACC Engine Foundation:
+  - Selected Beta → Riskfree → ERP → Cost of Equity → capital structure / cost of debt → WACC
+  - foundation output only — not FCFF, terminal, intrinsic, or Dashboard
+  - country-of-risk ERP with Review note until revenue-weighted ERP exists
+- Phase 4C-2B-12 adds Forecast & Fade Engine Foundation:
+  - Selected Damodaran Industrial Benchmark → Industry Benchmark Config → stage/history/cyclicality/fade readiness
+  - structure and readiness recommendations only — no revenue, margin, reinvestment, FCFF, terminal, or intrinsic math
+  - ISM-sector is display-only
+- Phase 4C-2B-13 adds Reinvestment / FCFF Engine Foundation:
+  - Company operating inputs → NOPAT → reinvestment method → reinvestment → FCFF
+  - NOPAT, reinvestment and FCFF only — no terminal value, DCF/PV, bridge, intrinsic value, or Dashboard decisions
+  - benchmark cyclical/high review context only — ISM-sector is display-only
+- Phase 4C-2B-14 adds Terminal Value Engine Foundation:
+  - Final forecast FCFF → stable growth → stable WACC → Terminal FCFF → Gordon Terminal Value
+  - terminal outputs only — no discounting, no DCF/PV, no Firm-to-Equity Bridge, no Intrinsic Value, and no Dashboard decision logic
+  - Exit Multiple / Hybrid treated as not implemented review notes; Gordon is the only foundation method
+  - ISM-sector is display-only and must not drive terminal value logic
+- Phase 4C-2B-15 adds DCF / PV Engine Foundation:
+  - Forecast PV of FCFF + PV of terminal value using foundation WACC and foundation FCFF sources
+  - discounting-only foundation outputs — no bridge, equity value, intrinsic value/share, or Dashboard decision logic
+  - ISM-sector is display-only and must not drive DCF/PV logic
+- Phase 4C-2B-16 adds Firm-to-Equity Bridge Engine Foundation:
+  - Value of Operating Assets (DCF/PV) + cash/non-operating assets − debt/preferred/minority/other claims → Equity Value
+  - bridge foundation outputs only — no intrinsic value per share, MOS, entry price, or Dashboard decision logic
+  - Total Debt uses gross debt plus lease liabilities (not net debt); ISM-sector is display-only
+- Phase 4C-2B-17 adds Intrinsic Value / Share Engine Foundation:
+  - Equity Value (bridge) ÷ selected diluted shares (explicit share unit) → Intrinsic Value / Share
+  - per-share foundation output only — no MOS, entry price, buy/sell/hold, or Dashboard decision logic
+  - current share price is display-only context when available; ISM-sector is display-only
+- Phase 4C-2B-9 adds Beta Engine Foundation (reference lookup only):
+  - Selected Damodaran Industrial Benchmark → `betaTableKey` → `damodaran_beta_global` → Beta Reference display
+  - Company Workspace and `/engine-docs/beta-engine` show readiness and source metadata
+  - no Cost of Equity, WACC, relevering, FCFF, terminal, bridge, or intrinsic math
+  - ISM-sector is not used for beta lookup
 
 ## Phase 4A Correction Notes
 - Riskfree selection is now explicitly tied to valuation currency mapping.

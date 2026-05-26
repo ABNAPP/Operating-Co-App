@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/back-link";
 import { revalidatePath } from "next/cache";
 import {
   ensureFxPairsRequiredByCompanies,
@@ -9,6 +10,7 @@ import {
 import { getSelectedFxRate } from "@/lib/data-hub/rateSelectors";
 import { runFxRefreshBucketQaCheck } from "@/lib/data-hub/fxRefreshService";
 import { runRequiredFxPairQaCheck } from "@/lib/data-hub/requiredFxPairs";
+import { formatFxRate } from "@/lib/utils/formatters";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +42,6 @@ export default async function FxRatesPage() {
     revalidatePath("/data-hub");
   }
 
-  const formatFx = (value: number | null) => (value === null ? "N/A" : value.toFixed(4));
   const requiredPairs = fxRows.filter((row) => row.requiredByCompany);
   const inverseDerivedPairs = fxRows.filter((row) => row.isInverseDerived);
   const sameCurrencyPairs = fxRows.filter((row) => row.fromCurrency === row.toCurrency);
@@ -54,6 +55,67 @@ export default async function FxRatesPage() {
       row.liveFxRate === null &&
       row.selectedFxRate === null,
   );
+
+  const referencePairsAll = referencePairs.concat(inverseDerivedPairs);
+
+  function getFxStatusDisplay(row: (typeof fxRows)[number]) {
+    if (
+      row.status === "Missing / Not Refreshed" &&
+      !row.requiredByCompany &&
+      row.fromCurrency !== row.toCurrency
+    ) {
+      return "Reference / Not refreshed yet";
+    }
+    return row.status;
+  }
+
+  function renderFxPairsTable(rows: typeof fxRows) {
+    return (
+      <div className="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>From Currency</th>
+              <th>To Currency</th>
+              <th>FX Pair</th>
+              <th>Live FX Rate</th>
+              <th>Manual Override</th>
+              <th>Selected FX Rate</th>
+              <th>Required by Company?</th>
+              <th>Required By Tickers</th>
+              <th>Purpose</th>
+              <th>Derived From Pair</th>
+              <th>Source</th>
+              <th>Last Updated</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td>{row.fromCurrency}</td>
+                <td>{row.toCurrency}</td>
+                <td>{row.fxPair}</td>
+                <td>{formatFxRate(row.liveFxRate)}</td>
+                <td>{formatFxRate(row.manualOverride)}</td>
+                <td>{formatFxRate(getSelectedFxRate(row))}</td>
+                <td>{row.requiredByCompany ? "Yes" : "No"}</td>
+                <td>{row.requiredByTickers?.join(", ") || "N/A"}</td>
+                <td>{row.purpose ?? "Reference Pair"}</td>
+                <td>{row.derivedFromPair ?? "N/A"}</td>
+                <td>{row.source}</td>
+                <td>{row.lastUpdated}</td>
+                <td>{getFxStatusDisplay(row)}</td>
+                <td>{row.notes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   const fxSourceLabel =
     fxSource === "firestore" && fxError?.toLowerCase().includes("local fx cache fallback")
       ? "Local Cache"
@@ -63,6 +125,7 @@ export default async function FxRatesPage() {
 
   return (
     <section className="pageSection">
+      <BackLink href="/data-hub" label="Back to Data Hub" />
       <div>
         <h2 className="sectionHeading">FX Rates</h2>
         <p className="sectionSubheading">
@@ -203,47 +266,25 @@ export default async function FxRatesPage() {
         </table>
       </div>
 
-      <div className="tableWrap">
-        <table>
-          <thead>
-            <tr>
-              <th>From Currency</th>
-              <th>To Currency</th>
-              <th>FX Pair</th>
-              <th>Live FX Rate</th>
-              <th>Manual Override</th>
-              <th>Selected FX Rate</th>
-              <th>Required by Company?</th>
-              <th>Required By Tickers</th>
-              <th>Purpose</th>
-              <th>Derived From Pair</th>
-              <th>Source</th>
-              <th>Last Updated</th>
-              <th>Status</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {fxRows.map((row) => (
-              <tr key={row.id}>
-                <td>{row.fromCurrency}</td>
-                <td>{row.toCurrency}</td>
-                <td>{row.fxPair}</td>
-                <td>{formatFx(row.liveFxRate)}</td>
-                <td>{formatFx(row.manualOverride)}</td>
-                <td>{formatFx(getSelectedFxRate(row))}</td>
-                <td>{row.requiredByCompany ? "Yes" : "No"}</td>
-                <td>{row.requiredByTickers?.join(", ") || "N/A"}</td>
-                <td>{row.purpose ?? "Reference Pair"}</td>
-                <td>{row.derivedFromPair ?? "N/A"}</td>
-                <td>{row.source}</td>
-                <td>{row.lastUpdated}</td>
-                <td>{row.status}</td>
-                <td>{row.notes}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="panel">
+        <h3 className="cardTitle">Required FX pairs (by companies)</h3>
+        <p className="cardMeta">Required pairs: {requiredPairs.length}</p>
+        {renderFxPairsTable(requiredPairs)}
+      </div>
+
+      <div className="panel">
+        <h3 className="cardTitle">Same-currency / System pairs</h3>
+        <p className="cardMeta">Same-currency pairs: {sameCurrencyPairs.length}</p>
+        {renderFxPairsTable(sameCurrencyPairs)}
+      </div>
+
+      <div className="panel">
+        <h3 className="cardTitle">Reference FX pairs</h3>
+        <p className="cardMeta">
+          Reference pairs: {referencePairsAll.length}{" "}
+          {missingRatePairs.length > 0 ? "(some may be not refreshed yet)" : ""}
+        </p>
+        {renderFxPairsTable(referencePairsAll)}
       </div>
     </section>
   );

@@ -3,7 +3,6 @@ import Link from "next/link";
 const navItems = [
   { label: "Dashboard", href: "/" },
   { label: "Companies", href: "/companies" },
-  { label: "Company Workspace", href: "/company-workspace" },
   { label: "Data Hub", href: "/data-hub" },
   { label: "Engine Docs", href: "/engine-docs" },
   { label: "Settings", href: "/settings" },
