@@ -1,6 +1,4 @@
 import "server-only";
-import fs from "node:fs/promises";
-import path from "node:path";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { getFirestoreDbSafe } from "@/lib/firebase/client";
@@ -34,6 +32,7 @@ import {
   getSelectedRiskfreeRate,
 } from "@/lib/data-hub/rateSelectors";
 import { ensureRequiredFxPairsForCompanies } from "@/lib/data-hub/requiredFxPairs";
+import { readFxRatesCache, writeFxRatesCache } from "@/lib/data-hub/fxCacheStore";
 
 export interface ReferenceDataSummary {
   mode: "mock" | "firestore";
@@ -84,15 +83,6 @@ async function countCollection(path: string) {
 }
 
 const DAILY_REFRESH_STATUS_DOC_ID = "daily-refresh-status";
-const FX_CACHE_DIR = path.join(process.cwd(), "data", "cache");
-const FX_CACHE_FILE_PATH = path.join(FX_CACHE_DIR, "fx-rates-cache.json");
-
-interface FxCacheState {
-  rows: FxPairRateRow[];
-  updatedAt: string;
-}
-
-let inMemoryFxCache: FxCacheState | null = null;
 const FIRESTORE_READ_TIMEOUT_MS = 2000;
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs = FIRESTORE_READ_TIMEOUT_MS): Promise<T> {
@@ -109,31 +99,6 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs = FIRESTORE_READ_TI
       clearTimeout(timeoutHandle);
     }
   }
-}
-
-async function readFxCache(): Promise<FxCacheState | null> {
-  if (inMemoryFxCache) {
-    return inMemoryFxCache;
-  }
-
-  try {
-    const content = await fs.readFile(FX_CACHE_FILE_PATH, "utf8");
-    const parsed = JSON.parse(content) as FxCacheState;
-    inMemoryFxCache = parsed;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-async function writeFxCache(rows: FxPairRateRow[]) {
-  const payload: FxCacheState = {
-    rows,
-    updatedAt: new Date().toISOString(),
-  };
-  await fs.mkdir(FX_CACHE_DIR, { recursive: true });
-  await fs.writeFile(FX_CACHE_FILE_PATH, JSON.stringify(payload), "utf8");
-  inMemoryFxCache = payload;
 }
 
 export async function getReferenceDataSummary(): Promise<RepositoryResult<ReferenceDataSummary>> {
@@ -251,7 +216,7 @@ export async function getFxRates(): Promise<RepositoryResult<FxPairRateRow[]>> {
       const rows = snapshot.docs.map((item) => item.data() as FxPairRateRow);
 
       if (rows.length > 0) {
-        await writeFxCache(rows);
+        await writeFxRatesCache(rows);
         return { data: rows, source: "firestore" };
       }
     } catch (error) {
@@ -263,9 +228,9 @@ export async function getFxRates(): Promise<RepositoryResult<FxPairRateRow[]>> {
   const db = getFirestoreDbSafe();
 
   if (!db) {
-    const cache = await readFxCache();
-    if (cache?.rows?.length) {
-      return { data: cache.rows, source: "firestore", error: "Using local FX cache fallback." };
+    const cacheRows = await readFxRatesCache();
+    if (cacheRows?.length) {
+      return { data: cacheRows, source: "firestore", error: "Using local FX cache fallback." };
     }
     return { data: fxRateConfigs, source: "mock", error: "Firestore not initialized." };
   }
@@ -275,20 +240,20 @@ export async function getFxRates(): Promise<RepositoryResult<FxPairRateRow[]>> {
     const rows = snapshot.docs.map((item) => item.data() as FxPairRateRow);
 
     if (rows.length === 0) {
-      const cache = await readFxCache();
-      if (cache?.rows?.length) {
-        return { data: cache.rows, source: "firestore", error: "Using local FX cache fallback." };
+      const cacheRows = await readFxRatesCache();
+      if (cacheRows?.length) {
+        return { data: cacheRows, source: "firestore", error: "Using local FX cache fallback." };
       }
       return { data: fxRateConfigs, source: "mock" };
     }
 
-    await writeFxCache(rows);
+    await writeFxRatesCache(rows);
     return { data: rows, source: "firestore" };
   } catch (error) {
-    const cache = await readFxCache();
-    if (cache?.rows?.length) {
+    const cacheRows = await readFxRatesCache();
+    if (cacheRows?.length) {
       return {
-        data: cache.rows,
+        data: cacheRows,
         source: "firestore",
         error: error instanceof Error ? `${error.message} (using local FX cache fallback)` : "Using local FX cache fallback.",
       };
@@ -482,12 +447,12 @@ export async function upsertFxPairRate(
       });
     }
 
-    const existingCache = await readFxCache();
+    const existingCacheRows = await readFxRatesCache();
     const cacheMap = new Map<string, FxPairRateRow>(
-      (existingCache?.rows ?? []).map((item) => [item.id, item]),
+      (existingCacheRows ?? []).map((item) => [item.id, item]),
     );
     cacheMap.set(normalizedRow.id, normalizedRow);
-    await writeFxCache(Array.from(cacheMap.values()));
+    await writeFxRatesCache(Array.from(cacheMap.values()));
 
     return { ok: true };
   } catch (error) {

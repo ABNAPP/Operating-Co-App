@@ -1,9 +1,16 @@
 import Link from "next/link";
 import { getDashboardRows } from "@/lib/firestore/repositories/dashboardRepository";
+import { getIndustryISMDisplayMapTable } from "@/lib/firestore/repositories/sectorIndustryMappingRepository";
 import type { ReviewSeverity } from "@/lib/types";
 
 export default async function Home() {
-  const { data: rows, source } = await getDashboardRows();
+  const [{ data: rows, source }, ismDisplayTable] = await Promise.all([
+    getDashboardRows(),
+    getIndustryISMDisplayMapTable(),
+  ]);
+  const ismByBenchmark = new Map(
+    ismDisplayTable.data.map((row) => [row.damodaranIndustrialBenchmark, row.ismSectorDisplay]),
+  );
 
   const formatCurrency = (value: number, currency = "USD") =>
     new Intl.NumberFormat("en-US", {
@@ -45,19 +52,20 @@ export default async function Home() {
               <th>Price</th>
               <th>Intrinsic Value / Share</th>
               <th>Market Cap</th>
-              <th>Sector</th>
+              <th>Industry Benchmark</th>
               <th>Final MOS</th>
               <th>Decision</th>
               <th>Review Flag</th>
               <th>Beta</th>
               <th>WACC</th>
-              <th>Workspace</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((company) => (
               <tr key={company.ticker}>
-                <td>{company.companyName}</td>
+                <td>
+                  <Link href={company.openCompanyUrl}>{company.companyName}</Link>
+                </td>
                 <td>
                   {company.ticker}:{company.exchange}
                 </td>
@@ -66,7 +74,14 @@ export default async function Home() {
                   {formatCurrency(company.intrinsicValuePerShare, company.valuationCurrency)}
                 </td>
                 <td>{formatMarketCap(company.marketCap, company.valuationCurrency)}</td>
-                <td>{company.ismSector}</td>
+                <td>
+                  {company.damodaranIndustrialBenchmark}
+                  {ismByBenchmark.get(company.damodaranIndustrialBenchmark)
+                    ? ` (ISM: ${ismByBenchmark.get(company.damodaranIndustrialBenchmark)})`
+                    : company.ismSector
+                      ? ` (ISM: ${company.ismSector})`
+                      : ""}
+                </td>
                 <td>{(company.finalMOS * 100).toFixed(2)}%</td>
                 <td>{company.decisionStatus}</td>
                 <td>
@@ -74,9 +89,6 @@ export default async function Home() {
                 </td>
                 <td>{company.beta.toFixed(2)}</td>
                 <td>{(company.wacc * 100).toFixed(2)}%</td>
-                <td>
-                  <Link href={company.openCompanyUrl}>Open Workspace</Link>
-                </td>
               </tr>
             ))}
           </tbody>

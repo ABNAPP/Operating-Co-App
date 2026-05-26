@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ClickableCardLink } from "@/components/clickable-card";
 import { getReferenceDataSummary } from "@/lib/firestore/repositories/referenceDataRepository";
 import { getCountryRiskErpImportStatus } from "@/lib/firestore/repositories/countryRiskErpRepository";
 import { getSectorIndustryMappingSummary } from "@/lib/firestore/repositories/sectorIndustryMappingRepository";
@@ -36,9 +36,9 @@ export default async function DataHubPage() {
       href: "/data-hub/country-risk-erp",
     },
     {
-      title: "Sector / Industry Mapping",
-      description: `ISM sectors: ${sectorSummary.ismSectorCount}, mapping required: ${sectorSummary.mappingRequiredCount}, excluded/special review: ${sectorSummary.excludedSpecialReviewCount}, last updated: ${sectorSummary.importedLastUpdated ?? "Not seeded"}, status: ${sectorSummary.status}.`,
-      count: sectorSummary.mappingRowsCount,
+      title: "Industry Benchmark Config",
+      description: `Benchmark-first configuration rows: ${sectorSummary.benchmarkPrimaryRowsCount ?? 0}, ISM helper rows: ${sectorSummary.mappingRowsCount}, mapping required: ${sectorSummary.mappingRequiredCount}, excluded/special review: ${sectorSummary.excludedSpecialReviewCount}, last updated: ${sectorSummary.importedLastUpdated ?? "Not seeded"}, status: ${sectorSummary.status}.`,
+      count: sectorSummary.benchmarkPrimaryRowsCount ?? 0,
       href: "/data-hub/sector-industry-mapping",
     },
     {
@@ -73,7 +73,7 @@ export default async function DataHubPage() {
         <h2 className="sectionHeading">Data Hub</h2>
         <p className="sectionSubheading">
           Central hub for shared reference data, refresh orchestration, and integration
-          readiness. Open a card to view detailed tables and actions.
+          readiness. Select a card to view detailed tables and actions.
         </p>
       </div>
 
@@ -97,14 +97,11 @@ export default async function DataHubPage() {
 
       <div className="cardGrid">
         {hubCards.map((card) => (
-          <article key={card.href} className="card">
+          <ClickableCardLink key={card.href} href={card.href} title={card.title}>
             <h3 className="cardTitle">{card.title}</h3>
             <p className="cardMeta">{card.description}</p>
             <p className="cardMeta">Status/Count: {card.count}</p>
-            <p style={{ marginTop: "0.65rem" }}>
-              <Link href={card.href}>Open</Link>
-            </p>
-          </article>
+          </ClickableCardLink>
         ))}
       </div>
 

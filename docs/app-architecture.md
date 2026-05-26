@@ -1,8 +1,8 @@
-# Operating Co App Architecture (Phase 0-4C-2B-1)
+# Operating Co App Architecture (Phase 0-4C-2B-5)
 
 ## Purpose
-- Translate the "Operating Co Template — Master Specification v1.4" into a Next.js / React / TypeScript app foundation.
-- Current scope includes architecture, app shell, Phase 2 type/data model scaffolding, Phase 3 Firestore foundation, Phase 4A refresh scaffolding, Phase 4B-1 FRED riskfree refresh, Phase 4B-2 FX provider refresh, Phase 4C-1 Country Risk / ERP Data Hub module, Phase 4C-2A Damodaran Industry Data Vault / Source Register, and Phase 4C-2B-1 Sector / Industry Mapping Foundation.
+- Translate the "Operating Co Template — Master Specification v1.5" into a Next.js / React / TypeScript app foundation.
+- Current scope includes architecture, app shell, Phase 2 type/data model scaffolding, Phase 3 Firestore foundation, Phase 4A refresh scaffolding, Phase 4B-1 FRED riskfree refresh, Phase 4B-2 FX provider refresh, Phase 4C-1 Country Risk / ERP Data Hub module, Phase 4C-2A Damodaran Industry Data Vault / Source Register, Phase 4C-2B-1 Sector / Industry Mapping Foundation, Phase 4C-2B-2 Sector Mapping Candidate Logic, Phase 4C-2B-3 benchmark-first sector mapping correction, Phase 4C-2B-4 benchmark-first stage/cyclicality default recommendations, and Phase 4C-2B-5 Industry Benchmark Config v1.5 contract consolidation.
 - Excluded scope remains valuation math, external market-data API integrations, Google Sheets logic, and Apps Script.
 
 ## Core Product Concept
@@ -12,10 +12,11 @@ Input -> Reference Data -> Global Valuation Engine -> Company-specific valuation
 - Dashboard is display/navigation only. It is **not** a valuation engine.
 - Global Valuation Engine is shared TypeScript logic across all companies.
 - Company Valuation Engine Results are company-specific outputs generated from one company's inputs.
-- No valuation calculations in Phase 0-4C-2B-1.
+- No valuation calculations in Phase 0-4C-2B-5.
 - `.env.local` remains local-only and must never be committed.
 - Daily refresh does not run on page load and is orchestrated via Vercel Cron.
 - Manual Override values always have priority over live values.
+- Industry Benchmark Config is benchmark-first: selected Damodaran benchmark is primary; ISM-sector is derived/display-only.
 
 ## Main Areas
 - Dashboard (table view of official/support outputs)
@@ -201,6 +202,69 @@ Input -> Reference Data -> Global Valuation Engine -> Company-specific valuation
   - no valuation-engine integration yet
 - Source-of-truth clarification:
   - old Google Sheet sector mapping content is context only, not active source-of-truth mapping in app data.
+
+## Phase 4C-2B-2 Additions (Sector Mapping Candidate Logic)
+- Added candidate mapping generation from ISM-sectors to Damodaran benchmark candidates.
+- Added strict benchmark validation against Damodaran Industry Master List before persistence.
+- Added candidate guide rows and readiness refresh updates for analyst-review workflows.
+- Added benchmark key assignment logic:
+  - keys are populated from validated primary benchmark
+  - key assignment is limited by dataset coverage availability
+  - missing coverage leaves keys blank and flags review warnings
+- Added protected generation route:
+  - `POST /api/data-hub/sector-industry-mapping/generate-candidates`
+  - Bearer `CRON_SECRET` required
+- Added user-edit preservation behavior:
+  - existing nonblank benchmark fields are not silently overwritten unless explicit overwrite mode is used
+- Explicit boundary retained:
+  - mapping recommends context only and does not directly force valuation assumptions
+  - no WACC/CoE/FCFF/TV/Bridge/Intrinsic math added
+
+## Phase 4C-2B-3 Additions (Benchmark-first Sector Mapping Correction)
+- Corrected mapping architecture to benchmark-first:
+  - Damodaran benchmark is primary lookup key for reference-data chain
+  - ISM-sector remains internal business classification
+- Added benchmark-to-ISM collection and repository accessors with local cache fallback support.
+- Added benchmark-first candidate generation route and Data Hub rendering section.
+- Kept ISM-to-benchmark rows as reverse/helper view (not primary valuation key direction).
+- Updated Company Workspace scaffold to benchmark-first selection and ISM auto-suggestion behavior.
+- Legacy Google Sheet remains context-only input, never source-of-truth.
+
+## Phase 4C-2B-4 Additions (Benchmark-first Stage/Cyclicality Defaults)
+- Added benchmark-first recommendation fields for:
+  - default stage type
+  - cyclicality
+  - history/normalization hints
+  - stable margin/ROC/sales-to-capital rules
+  - forecast-fade and terminal-readiness hints
+- Added transparent benchmark default-rules helper logic for utility/commodity/technology/defensive/healthcare/broad/excluded categories.
+- Kept recommendations advisory only:
+  - no valuation engine calculations
+  - no beta/WACC/FCFF/terminal/bridge/intrinsic computations
+- Reverse ISM -> benchmark helper table remains available but explicitly secondary.
+
+## Phase 4C-2B-5 Additions (Industry Benchmark Config v1.5 Contract Consolidation)
+- Master Specification v1.5 is the active source of truth for benchmark-first industry logic.
+- Visible module naming is now Industry Benchmark Config (route compatibility can remain as `sector-industry-mapping`).
+- Selected Damodaran Industrial Benchmark is the primary industry anchor for workspace and dashboard display.
+- ISM-sector is derived/display-only and is not the primary valuation driver.
+- Industry Benchmark Config stores benchmark pull-key authority (beta, margin, ROC/ROIC, reinvestment/sales-to-capital, working capital, tax, WACC sanity, multiples sanity).
+- Pricing multiples remain sanity-only and do not feed official intrinsic value outputs.
+- No valuation math is added in this phase.
+
+## Phase 4C-2B-6 Additions (Exact v1.5 Tables)
+- Exact v1.5 Industry Benchmark Config tables are parsed from `data/spec/Operating_Co_Template_Master_Specification_v1_5.txt`.
+- Data Hub displays the seven exact source-of-truth tables:
+  - `tblIndustryBenchmarkHeader`
+  - `tblDamodaranIndustryUniverse`
+  - `tblIndustryBenchmarkConfig`
+  - `tblBenchmarkDataPullKeys`
+  - `tblIndustryISMDisplayMap`
+  - `tblIndustryBenchmarkRules`
+  - `tblIndustryBenchmarkStatusValues`
+- Generated/candidate mappings are retained only as collapsed internal helper data and are not source of truth.
+- ISM display map remains display-only and explicitly does not drive valuation engines.
+- Pull keys come from `tblBenchmarkDataPullKeys`.
 
 ## Not Yet Built
 - Full Firestore data governance and validation rules

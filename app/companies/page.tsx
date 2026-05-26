@@ -15,7 +15,7 @@ export default async function CompaniesPage() {
       </div>
 
       <div className="cardGrid">
-        <Link href="/companies/new" className="card">
+        <Link href="/companies/new" className="clickableCard">
           <h3 className="cardTitle">+ Create New Company</h3>
           <p className="cardMeta">
             Placeholder action for onboarding a new company in a later phase.
@@ -26,12 +26,12 @@ export default async function CompaniesPage() {
           <Link
             key={company.identity.cleanTicker}
             href={`/companies/${company.identity.cleanTicker}`}
-            className="card"
+            className="clickableCard"
           >
             <h3 className="cardTitle">{company.identity.companyName}</h3>
             <p className="cardMeta">{company.identity.fullTicker}</p>
             <p className="cardMeta">
-              Sector: {company.identity.ismSector} / {company.identity.damodaranIndustrialBenchmark}
+              Industry: {company.identity.damodaranIndustrialBenchmark} (ISM: {company.identity.ismSector})
             </p>
             <p className="cardMeta">
               Decision: {company.valuationResult.decisionResult.decisionStatus}

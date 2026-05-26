@@ -126,8 +126,11 @@ export interface DailyRefreshStatus {
   fxProviderAttempts?: number;
   fxUpdatedCount?: number;
   fxSkippedCount?: number;
+  fxStalePreservedCount?: number;
   fxManualOverrideCount?: number;
   fxSameCurrencyCount?: number;
+  fxInverseDerivedCount?: number;
+  fxProviderUsed?: string;
   riskfreeLastAttemptAt?: string;
   riskfreeLastSuccessfulRefreshAt?: string;
 }

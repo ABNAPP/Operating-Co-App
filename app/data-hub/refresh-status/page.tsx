@@ -51,16 +51,23 @@ export default async function RefreshStatusPage() {
         <p className="cardMeta">
           FX providers used: {refreshStatus.fxProvidersUsed?.join(", ") || "N/A"}
         </p>
+        <p className="cardMeta">Primary FX provider used: {refreshStatus.fxProviderUsed ?? "N/A"}</p>
         <p className="cardMeta">
           FX provider attempts (external calls): {refreshStatus.fxProviderAttempts ?? 0}
         </p>
         <p className="cardMeta">FX updated rows: {refreshStatus.fxUpdatedCount ?? 0}</p>
         <p className="cardMeta">FX skipped rows: {refreshStatus.fxSkippedCount ?? 0}</p>
         <p className="cardMeta">
+          FX stale-preserved rows: {refreshStatus.fxStalePreservedCount ?? 0}
+        </p>
+        <p className="cardMeta">
           FX manual-override rows: {refreshStatus.fxManualOverrideCount ?? 0}
         </p>
         <p className="cardMeta">
           FX same-currency normalized rows: {refreshStatus.fxSameCurrencyCount ?? 0}
+        </p>
+        <p className="cardMeta">
+          FX inverse-derived rows: {refreshStatus.fxInverseDerivedCount ?? 0}
         </p>
         <p className="cardMeta">
           FX warning/error:{" "}

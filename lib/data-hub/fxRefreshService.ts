@@ -2,6 +2,7 @@ import "server-only";
 import { Timestamp } from "firebase-admin/firestore";
 import { buildFxPairRowsFromCurrencyMap, getSelectedFxRate } from "@/lib/data-hub/rateSelectors";
 import { fetchFxRateFromProviderChain } from "@/lib/data-hub/fx-providers/providerChain";
+import { readFxRatesCache, writeFxRatesCache } from "@/lib/data-hub/fxCacheStore";
 import { ensureRequiredFxPairsForCompanies } from "@/lib/data-hub/requiredFxPairs";
 import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { COLLECTIONS } from "@/lib/firestore/collections";
@@ -13,8 +14,10 @@ export interface FxRefreshSummary {
   status: string;
   updated: number;
   skipped: number;
+  stalePreserved: number;
   manualOverride: number;
   sameCurrency: number;
+  inverseDerived: number;
   errors: string[];
   warnings: string[];
   providersUsed: string[];
@@ -187,23 +190,34 @@ async function loadCurrencyMap(db: ReturnType<typeof getAdminDb>): Promise<Curre
     return currencyMapRows;
   }
 
-  const snapshot = await db.collection(COLLECTIONS.currencyMap).get();
-  if (snapshot.empty) {
+  try {
+    const snapshot = await db.collection(COLLECTIONS.currencyMap).get();
+    if (snapshot.empty) {
+      return currencyMapRows;
+    }
+    return snapshot.docs.map((doc) => doc.data() as CurrencyMapRow);
+  } catch {
     return currencyMapRows;
   }
-  return snapshot.docs.map((doc) => doc.data() as CurrencyMapRow);
 }
 
 async function loadFxPairRows(db: ReturnType<typeof getAdminDb>): Promise<FxPairRateRow[]> {
   if (!db) {
-    return fxRateConfigs;
+    const cached = await readFxRatesCache();
+    return cached?.length ? cached : fxRateConfigs;
   }
 
-  const snapshot = await db.collection(COLLECTIONS.fxRates).get();
-  if (snapshot.empty) {
-    return fxRateConfigs;
+  try {
+    const snapshot = await db.collection(COLLECTIONS.fxRates).get();
+    if (snapshot.empty) {
+      const cached = await readFxRatesCache();
+      return cached?.length ? cached : fxRateConfigs;
+    }
+    return snapshot.docs.map((doc) => doc.data() as FxPairRateRow);
+  } catch {
+    const cached = await readFxRatesCache();
+    return cached?.length ? cached : fxRateConfigs;
   }
-  return snapshot.docs.map((doc) => doc.data() as FxPairRateRow);
 }
 
 export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSummary> {
@@ -215,8 +229,10 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
       status: "Firebase Admin not configured",
       updated: 0,
       skipped: 0,
+      stalePreserved: 0,
       manualOverride: 0,
       sameCurrency: 0,
+      inverseDerived: 0,
       errors: [],
       warnings: ["Server write unavailable. Configure Firebase Admin credentials."],
       providersUsed: [],
@@ -236,8 +252,10 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
       status: "Firebase Admin not configured",
       updated: 0,
       skipped: 0,
+      stalePreserved: 0,
       manualOverride: 0,
       sameCurrency: 0,
+      inverseDerived: 0,
       errors: [],
       warnings: ["Server write unavailable. Admin DB initialization failed."],
       providersUsed: [],
@@ -272,6 +290,8 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
   let skipped = 0;
   let manualOverride = 0;
   let sameCurrency = 0;
+  let stalePreserved = 0;
+  let inverseDerived = 0;
   let providerCallCount = 0;
   const warnings: string[] = [];
   const errors: string[] = [];
@@ -279,6 +299,7 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
   const providersFailedSet = new Set<string>();
   const providerUsageCounts: Record<string, number> = {};
   const processedRows = new Set<string>();
+  let firestoreWritable = true;
 
   if (!ensureRequiredPairsSummary.ok) {
     warnings.push(
@@ -289,10 +310,20 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
 
   async function persistRow(row: FxPairRateRow) {
     const firestoreRow = toFirestoreSafeFxRow(row);
-    await firestore.collection(COLLECTIONS.fxRates).doc(row.id).set(
-      { ...firestoreRow, refreshedAt: Timestamp.fromDate(new Date()) },
-      { merge: true },
-    );
+    if (firestoreWritable) {
+      try {
+        await firestore.collection(COLLECTIONS.fxRates).doc(row.id).set(
+          { ...firestoreRow, refreshedAt: Timestamp.fromDate(new Date()) },
+          { merge: true },
+        );
+      } catch (error) {
+        firestoreWritable = false;
+        const message =
+          error instanceof Error ? error.message : "Unknown Firestore FX write error.";
+        warnings.push(`Firestore FX write unavailable; using local FX cache persistence. ${message}`);
+        errors.push(`FX row ${row.fxPair}: ${message}`);
+      }
+    }
     rowMap.set(row.id, firestoreRow as FxPairRateRow);
     processedRows.add(firestoreRow.id);
   }
@@ -340,7 +371,7 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
       liveFxRate: inverseRate,
       selectedFxRate: inverseRate,
       source: `${providerLabel} inverse`,
-      status: "OK",
+      status: "Auto Updated / OK",
       notes: `Derived as inverse of ${row.fromCurrency}/${row.toCurrency}.`,
       lastUpdated: new Date().toISOString(),
       derivedFromPair: row.fxPair,
@@ -351,6 +382,7 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
 
     await persistRow(derived);
     updated += 1;
+    inverseDerived += 1;
   }
 
   async function refreshByProvider(row: FxPairRateRow, requiredPair: boolean) {
@@ -371,7 +403,7 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
           liveFxRate: inverseRate,
           selectedFxRate: inverseRate,
           source: `${inverseSource} inverse`,
-          status: "OK",
+          status: "Auto Updated / OK",
           notes: `Derived as inverse of ${reverseRow?.fromCurrency}/${reverseRow?.toCurrency}.`,
           lastUpdated: new Date().toISOString(),
           derivedFromPair: reverseRow?.fxPair,
@@ -381,22 +413,23 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
         };
         await persistRow(derivedRow);
         updated += 1;
+        inverseDerived += 1;
         return;
       }
     }
 
     if (providerCallCount >= refreshLimit) {
       skipped += 1;
-      const reason = `Skipped due to FX_REFRESH_MAX_PAIRS_PER_RUN=${refreshLimit}.`;
+      const reason = `Skipped due to FX_REFRESH_MAX_PAIRS_PER_RUN=${refreshLimit}; previous value preserved.`;
+      const hadStoredValue =
+        row.manualOverride !== null || row.selectedFxRate !== null || row.liveFxRate !== null;
       const skippedRow: FxPairRateRow = {
         ...row,
         refreshSkippedReason: reason,
-        status: row.requiredByCompany
-          ? "Currency Review / Not Updated"
-          : row.status,
-        notes: row.requiredByCompany
-          ? "Required pair skipped due to refresh cap."
-          : row.notes,
+        status: hadStoredValue ? "Skipped / Preserved" : "Missing / Not Refreshed",
+        notes: hadStoredValue
+          ? "Skipped due to refresh cap; previous value preserved."
+          : "Skipped due to refresh cap; no stored value yet.",
       };
       await persistRow(skippedRow);
       warnings.push(
@@ -416,21 +449,24 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
 
     if (!chain.success || !chain.result?.rate) {
       const fallbackSelected = getSelectedFxRate(row);
+      const hasStoredValue =
+        row.manualOverride !== null || row.selectedFxRate !== null || row.liveFxRate !== null;
       const failed: FxPairRateRow = {
         ...row,
+        liveFxRate: row.liveFxRate,
         selectedFxRate: fallbackSelected,
-        status:
-          fallbackSelected !== null
-            ? "Currency Review / Not Updated"
-            : "Currency Review / Missing FX",
+        status: hasStoredValue ? "Stale / Review" : "Missing / Provider Failed",
         notes:
-          fallbackSelected !== null
-            ? "Provider chain failed; retained previous selected FX rate."
-            : "Provider chain failed; no FX rate available.",
+          hasStoredValue
+            ? "Provider refresh failed; preserving last stored rate."
+            : "Provider refresh failed and no stored rate exists.",
         providerAttemptCount: chain.providerAttemptCount,
         lastProviderAttempted: chain.providerAttempts.at(-1),
       };
       await persistRow(failed);
+      if (hasStoredValue) {
+        stalePreserved += 1;
+      }
       return;
     }
 
@@ -443,7 +479,7 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
       selectedFxRate: chain.result.rate,
       source: providerLabel,
       lastUpdated: chain.result.quoteDate ?? new Date().toISOString(),
-      status: "OK",
+      status: "Auto Updated / OK",
       notes: `Auto-updated from ${providerLabel}.`,
       providerAttemptCount: chain.providerAttemptCount,
       lastProviderAttempted: chain.providerUsed ?? chain.providerAttempts.at(-1),
@@ -467,7 +503,7 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
       liveFxRate: 1,
       selectedFxRate: 1,
       source: "System",
-      status: "OK",
+      status: "System",
       purpose: "Same Currency",
       notes: "Same-currency pair.",
       lastUpdated: new Date().toISOString(),
@@ -508,14 +544,18 @@ export async function refreshFxRatesFromProviderPriority(): Promise<FxRefreshSum
 
   const finishedAt = new Date().toISOString();
   const success = errors.length === 0;
+  const finalRows = Array.from(rowMap.values());
+  await writeFxRatesCache(finalRows);
 
   return {
     success,
     status: success ? "FX Refreshed" : "FX Refresh Completed With Errors",
     updated,
     skipped,
+    stalePreserved,
     manualOverride,
     sameCurrency,
+    inverseDerived,
     errors,
     warnings,
     providersUsed: Array.from(providersUsedSet),

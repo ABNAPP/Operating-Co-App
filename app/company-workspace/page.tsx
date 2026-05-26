@@ -9,7 +9,7 @@ export default async function CompanyWorkspaceIndexPage() {
       <div>
         <h2 className="sectionHeading">Company Workspace</h2>
         <p className="sectionSubheading">
-          Open a company to view company-specific valuation engine result placeholders.
+          Select a company card to view company-specific valuation engine result placeholders.
           Data source: {source === "firestore" ? "Firestore" : "Mock"}.
         </p>
       </div>
@@ -19,11 +19,13 @@ export default async function CompanyWorkspaceIndexPage() {
           <Link
             key={company.identity.cleanTicker}
             href={`/companies/${company.identity.cleanTicker}`}
-            className="card"
+            className="clickableCard"
           >
             <h3 className="cardTitle">{company.identity.companyName}</h3>
             <p className="cardMeta">{company.identity.fullTicker}</p>
-            <p className="cardMeta">Open Workspace</p>
+            <p className="cardMeta">
+              {company.identity.damodaranIndustrialBenchmark} · {company.valuationResult.decisionResult.decisionStatus}
+            </p>
           </Link>
         ))}
       </div>

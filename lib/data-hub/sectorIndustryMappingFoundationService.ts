@@ -11,9 +11,10 @@ import type {
 import { validateSectorMappingsAgainstDamodaranMaster } from "@/lib/data-hub/sectorBenchmarkValidationService";
 import { sectorMappingStatusDefinitions } from "@/lib/data-hub/sectorBenchmarkValidationService";
 
-export const SECTOR_MAPPING_SOURCE_NAME = "Operating Co Template — Master Specification v1.4";
-export const SECTOR_MAPPING_SOURCE_URL = "internal://operating-co-template-master-spec-v1.4";
-export const SECTOR_MAPPING_SOURCE_UPDATE_DATE = "2026-05-25";
+// Legacy/helper foundation layer kept for compatibility.
+export const SECTOR_MAPPING_SOURCE_NAME = "Operating Co Template — Master Specification v1.5";
+export const SECTOR_MAPPING_SOURCE_URL = "internal://operating-co-template-master-spec-v1.5";
+export const SECTOR_MAPPING_SOURCE_UPDATE_DATE = "2026-05-26";
 
 function slugify(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -115,6 +116,7 @@ export function buildSectorMappingFoundationRows(ismRows: ISMSectorRow[]): Secto
       sourceUrl: SECTOR_MAPPING_SOURCE_URL,
       sourceUpdateDate: SECTOR_MAPPING_SOURCE_UPDATE_DATE,
       importedLastUpdated: now,
+      mappingDirection: "ISM_TO_BENCHMARK_HELPER",
       notes:
         "Benchmark mapping will be generated/validated in Phase 4C-2B-2. This foundation row does not force valuation assumptions.",
     };
@@ -258,6 +260,12 @@ export async function seedSectorIndustryMappingFoundation(params?: {
     mappingRequiredCount,
     excludedSpecialReviewCount,
     reviewRequiredCount,
+    okCount: finalMappingRows.filter((row) => row.status === "OK").length,
+    rowsEvaluated: finalMappingRows.length,
+    candidatesGenerated: finalMappingRows.filter((row) => Boolean(row.primaryDamodaranIndustrialBenchmark)).length,
+    primaryValidCount: 0,
+    primaryInvalidCount: 0,
+    lastCandidateGeneratedAt: null,
     industryMasterListAvailable: validation.industryMasterListAvailable,
     warnings: validation.warnings,
     errors: validation.errors,

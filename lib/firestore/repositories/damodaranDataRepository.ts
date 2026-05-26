@@ -6,11 +6,13 @@ import {
   buildDamodaranDataVaultFromLocalFiles,
   computeStaleImportStatus,
 } from "@/lib/data-hub/damodaranDataImportService";
+import { buildCanonicalDamodaranIndustryList } from "@/lib/data-hub/damodaranIndustryCanonicalService";
 import { damodaranDatasetRegistry } from "@/lib/data-hub/damodaranDatasetRegistry";
 import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { getFirestoreDbSafe } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firestore/collections";
 import type {
+  CanonicalDamodaranIndustryRow,
   DamodaranDatasetCoverageRow,
   DamodaranDatasetRegisterRow,
   DamodaranImportSummary,
@@ -26,6 +28,7 @@ const CACHE_FILE_PATH = path.join(CACHE_DIR, "data-vault-cache.json");
 interface DamodaranDataVaultCache {
   registerRows: DamodaranDatasetRegisterRow[];
   industryMasterRows: DamodaranIndustryMasterRow[];
+  canonicalIndustryRows?: CanonicalDamodaranIndustryRow[];
   coverageRows: DamodaranDatasetCoverageRow[];
   rawDatasetRows: DamodaranRawDatasetRow[];
   importSummary: DamodaranImportSummary;
@@ -239,6 +242,23 @@ export async function getDamodaranIndustryMasterList(): Promise<
   return result;
 }
 
+export async function getCanonicalDamodaranIndustries(): Promise<
+  RepositoryResult<CanonicalDamodaranIndustryRow[]>
+> {
+  const result = await getCollectionRows<CanonicalDamodaranIndustryRow>(
+    COLLECTIONS.canonicalDamodaranIndustries,
+    [],
+  );
+  if (result.source === "firestore" && result.data.length > 0) {
+    return result;
+  }
+  const cache = await readDamodaranDataVaultCache();
+  if (cache?.canonicalIndustryRows && cache.canonicalIndustryRows.length > 0) {
+    return { data: cache.canonicalIndustryRows, source: "firestore", error: result.error };
+  }
+  return result;
+}
+
 export async function upsertDamodaranIndustryMasterRows(rows: DamodaranIndustryMasterRow[]) {
   const adminDb = getAdminDb();
   if (!isFirebaseAdminConfigured() || !adminDb) {
@@ -303,6 +323,55 @@ export async function upsertDamodaranCoverageRows(rows: DamodaranDatasetCoverage
       error: error instanceof Error ? error.message : "Unknown coverage upsert error.",
     };
   }
+}
+
+export async function upsertCanonicalDamodaranIndustries(rows: CanonicalDamodaranIndustryRow[]) {
+  const adminDb = getAdminDb();
+  if (isFirebaseAdminConfigured() && adminDb) {
+    try {
+      for (const row of rows) {
+        await adminDb.collection(COLLECTIONS.canonicalDamodaranIndustries).doc(row.id).set(row, {
+          merge: true,
+        });
+      }
+      return { ok: true, upserted: rows.length };
+    } catch {
+      // continue to client fallback
+    }
+  }
+
+  const db = getFirestoreDbSafe();
+  if (!db) {
+    return { ok: false, upserted: 0, error: "Firestore not initialized." };
+  }
+
+  try {
+    for (const row of rows) {
+      await setDoc(doc(db, COLLECTIONS.canonicalDamodaranIndustries, row.id), row, { merge: true });
+    }
+    return { ok: true, upserted: rows.length };
+  } catch (error) {
+    return {
+      ok: false,
+      upserted: 0,
+      error: error instanceof Error ? error.message : "Unknown canonical industries upsert error.",
+    };
+  }
+}
+
+export async function getCanonicalIndustryByName(name: string): Promise<
+  RepositoryResult<CanonicalDamodaranIndustryRow | null>
+> {
+  const canonical = await getCanonicalDamodaranIndustries();
+  const normalized = name.trim().toLowerCase().replace(/\s+/g, " ");
+  return {
+    source: canonical.source,
+    error: canonical.error,
+    data:
+      canonical.data.find((row) => row.industryName === name) ??
+      canonical.data.find((row) => row.normalizedIndustryName === normalized) ??
+      null,
+  };
 }
 
 export async function getDamodaranImportSummary(): Promise<RepositoryResult<DamodaranImportSummary>> {
@@ -403,6 +472,19 @@ export async function getDamodaranRawDatasetRows(
       error: error instanceof Error ? error.message : "Unknown raw dataset rows read error.",
     };
   }
+}
+
+export async function getAllDamodaranRawDatasetRows(): Promise<RepositoryResult<DamodaranRawDatasetRow[]>> {
+  const cache = await readDamodaranDataVaultCache();
+  if (cache?.rawDatasetRows?.length) {
+    return { data: cache.rawDatasetRows, source: "firestore", error: "Using local Damodaran cache fallback." };
+  }
+
+  const result = await getCollectionRows<DamodaranRawDatasetRow>(COLLECTIONS.damodaranRawDatasetRows, []);
+  if (result.source === "firestore" && result.data.length > 0) {
+    return result;
+  }
+  return result;
 }
 
 export async function upsertDamodaranRawDatasetRows(
@@ -615,6 +697,7 @@ export async function refreshDamodaranDataVaultFromLocalFiles() {
   await writeDamodaranDataVaultCache({
     registerRows: computed.registerRows,
     industryMasterRows: computed.industryMasterRows,
+    canonicalIndustryRows: [],
     coverageRows: computed.coverageRows,
     rawDatasetRows: computed.rawDatasetRows,
     importSummary: computed.importSummary,
@@ -735,4 +818,40 @@ export async function refreshDamodaranDataVaultFromLocalFiles() {
       };
     }
   }
+}
+
+export async function refreshCanonicalDamodaranIndustryList() {
+  const [rawRows, masterRows, coverageRows, cache] = await Promise.all([
+    getAllDamodaranRawDatasetRows(),
+    getDamodaranIndustryMasterList(),
+    getDamodaranCoverageMatrix(),
+    readDamodaranDataVaultCache(),
+  ]);
+  const computed = buildCanonicalDamodaranIndustryList({
+    rawRows: rawRows.data,
+    masterRows: masterRows.data,
+    coverageRows: coverageRows.data,
+  });
+
+  const upsertResult = await upsertCanonicalDamodaranIndustries(computed.rows);
+
+  await writeDamodaranDataVaultCache({
+    registerRows: cache?.registerRows ?? [],
+    industryMasterRows: masterRows.data,
+    canonicalIndustryRows: computed.rows,
+    coverageRows: coverageRows.data,
+    rawDatasetRows: rawRows.data,
+    importSummary: cache?.importSummary ?? defaultImportSummary,
+  });
+
+  return {
+    ok: upsertResult.ok,
+    rawIndustryCount: computed.summary.rawIndustryCount,
+    canonicalIndustryCount: computed.summary.canonicalIndustryCount,
+    variantsExcluded: computed.summary.variantsExcluded,
+    nonIndustryExcluded: computed.summary.nonIndustryExcluded,
+    readiness: computed.summary.readiness,
+    warnings: computed.summary.warnings,
+    error: upsertResult.error,
+  };
 }

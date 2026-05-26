@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function FxRatesPage() {
   const { data: currencyMapRows, source: mapSource } = await getCurrencyMap();
-  const { data: fxRows, source: fxSource } = await getFxPairRates();
+  const { data: fxRows, source: fxSource, error: fxError } = await getFxPairRates();
   const qaCheck = runRequiredFxPairQaCheck();
   const refreshQaCheck = runFxRefreshBucketQaCheck();
 
@@ -54,6 +54,12 @@ export default async function FxRatesPage() {
       row.liveFxRate === null &&
       row.selectedFxRate === null,
   );
+  const fxSourceLabel =
+    fxSource === "firestore" && fxError?.toLowerCase().includes("local fx cache fallback")
+      ? "Local Cache"
+      : fxSource === "firestore"
+        ? "Firestore"
+        : "Mock fallback";
 
   return (
     <section className="pageSection">
@@ -62,8 +68,13 @@ export default async function FxRatesPage() {
         <p className="sectionSubheading">
           FX rates are separate from riskfree rates and do not set riskfree values. Currency
           map source: {mapSource === "firestore" ? "Firestore" : "Mock"}; FX pair source:{" "}
-          {fxSource === "firestore" ? "Firestore" : "Mock"}.
+          {fxSourceLabel}.
         </p>
+        {fxSource === "mock" ? (
+          <p className="cardMeta">
+            Mock fallback active - no persisted FX data found.
+          </p>
+        ) : null}
       </div>
 
       <div className="panel">
@@ -87,6 +98,14 @@ export default async function FxRatesPage() {
         <p className="cardMeta">
           Manual server refresh endpoint: <code>/api/data-hub/fx-rates/refresh</code> (POST +
           Bearer CRON_SECRET).
+        </p>
+        <p className="cardMeta">
+          FX rates are refreshed once daily by cron and stored. Non-refreshed rows preserve their
+          last successful value.
+        </p>
+        <p className="cardMeta">
+          Statuses: OK, Auto Updated / OK, System, Manual Override, Stale / Review, Missing / Not
+          Refreshed, Skipped / Preserved.
         </p>
       </div>
 

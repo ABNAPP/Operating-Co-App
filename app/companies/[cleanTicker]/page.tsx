@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCompanyByCleanTicker } from "@/lib/firestore/repositories/companiesRepository";
 import {
-  getActiveISMSectorRows,
-  getSectorIndustryMappingByISMSector,
+  getBenchmarkDataPullKeysTable,
+  getDamodaranIndustryUniverse,
+  getIndustryBenchmarkConfigTable,
+  getIndustryISMDisplayMapTable,
 } from "@/lib/firestore/repositories/sectorIndustryMappingRepository";
 
 const workspaceSections = [
@@ -23,17 +25,28 @@ export default async function CompanyWorkspacePage({
 }) {
   const { cleanTicker } = await params;
   const { data: company, source } = await getCompanyByCleanTicker(cleanTicker);
-  const activeSectors = await getActiveISMSectorRows();
 
   if (!company) {
     notFound();
   }
 
-  const selectedSector =
-    activeSectors.data.find((row) => row.ismSector === company.identity.ismSector)?.ismSector ?? "";
-  const selectedMapping = selectedSector
-    ? await getSectorIndustryMappingByISMSector(selectedSector)
-    : { data: null };
+  const [benchmarkUniverse, benchmarkConfigTable, ismDisplayMapTable, pullKeysTable] =
+    await Promise.all([
+      getDamodaranIndustryUniverse(),
+      getIndustryBenchmarkConfigTable(),
+      getIndustryISMDisplayMapTable(),
+      getBenchmarkDataPullKeysTable(),
+    ]);
+
+  const selectedBenchmark = company.identity.damodaranIndustrialBenchmark ?? "";
+  const benchmarkConfig =
+    benchmarkConfigTable.data.find((row) => row.damodaranIndustrialBenchmark === selectedBenchmark) ??
+    null;
+  const selectedIsmRow =
+    ismDisplayMapTable.data.find((row) => row.damodaranIndustrialBenchmark === selectedBenchmark) ??
+    null;
+  const pullKeys =
+    pullKeysTable.data.find((row) => row.damodaranIndustrialBenchmark === selectedBenchmark) ?? null;
 
   return (
     <section className="pageSection">
@@ -82,28 +95,66 @@ export default async function CompanyWorkspacePage({
           <p className="cardMeta">Riskfree rate: {company.riskWaccInputs.riskfreeRate}</p>
         </article>
         <article className="card">
-          <h3 className="cardTitle">Sector Mapping Scaffold</h3>
+          <h3 className="cardTitle">Industry Benchmark Config Scaffold</h3>
           <p className="cardMeta">
-            Foundation only. No beta/WACC/FCFF calculation is executed from this mapping in this
-            phase.
+            Benchmark-first scaffold only. No beta/WACC/FCFF calculation is executed from this
+            mapping in this phase.
           </p>
-          <label className="cardMeta" htmlFor="ism-sector-select">
-            ISM-sector
+          <label className="cardMeta" htmlFor="benchmark-select">
+            Selected Damodaran Industrial Benchmark (Primary)
           </label>
-          <select id="ism-sector-select" defaultValue={selectedSector} disabled>
-            <option value="">Select ISM-sector</option>
-            {activeSectors.data.map((sector) => (
-              <option key={sector.id} value={sector.ismSector}>
-                {sector.ismSector}
+          <select id="benchmark-select" defaultValue={selectedBenchmark} disabled>
+            <option value="">Select benchmark</option>
+            {benchmarkUniverse.data.map((row) => (
+              <option key={row.id} value={row.damodaranIndustrialBenchmark}>
+                {row.damodaranIndustrialBenchmark}
               </option>
             ))}
           </select>
           <p className="cardMeta" style={{ marginTop: "0.5rem" }}>
-            Damodaran Industrial Benchmark:{" "}
-            {selectedMapping.data?.primaryDamodaranIndustrialBenchmark ?? "Mapping Required"}
+            Current selection: {selectedBenchmark || "Mapping Required"}
           </p>
           <p className="cardMeta">
-            Mapping Status: {selectedMapping.data?.status ?? "Not Ready / Mapping Required"}
+            ISM-sector (Derived display-only):{" "}
+            {selectedIsmRow?.ismSectorDisplay ?? "Mapping Required"}
+          </p>
+          <p className="cardMeta">
+            ISM display use: {selectedIsmRow?.use ?? "Display only - no model-driving effect"}
+          </p>
+          <p className="cardMeta">
+            Template Status: {benchmarkConfig?.templateStatus ?? "Review Required"}
+          </p>
+          <p className="cardMeta">
+            Default Stage Recommendation:{" "}
+            {benchmarkConfig?.defaultStageRecommendation ?? "Review Required"}
+          </p>
+          <p className="cardMeta">
+            History Recommendation: {benchmarkConfig?.historyRecommendation ?? "Review Required"}
+          </p>
+          <p className="cardMeta">
+            Cyclicality Flag: {benchmarkConfig?.cyclicalityFlag ?? "Review Required"}
+          </p>
+          <p className="cardMeta">
+            Asset Intensity: {benchmarkConfig?.assetIntensity ?? "Review Required"}
+          </p>
+          <p className="cardMeta">
+            Regulatory Flag: {benchmarkConfig?.regulatoryFlag ?? "Review Required"}
+          </p>
+          <p className="cardMeta">
+            Pull Keys (tblBenchmarkDataPullKeys):{" "}
+            {pullKeys
+              ? `${pullKeys.betaTableKey}, ${pullKeys.marginTableKey}, ${pullKeys.reinvestmentTableKey}`
+              : "Mapping Required"}
+          </p>
+          <p className="cardMeta">
+            No valuation math is derived from this section in this phase.
+          </p>
+          <p className="cardMeta">
+            Stage/history/cyclicality fields are support context from exact v1.5 tables.
+          </p>
+          <p className="cardMeta">ISM-sector is display-only and not a primary driver input.</p>
+          <p className="cardMeta">
+            Configured benchmark universe count: {benchmarkUniverse.data.length}
           </p>
         </article>
         <article className="card">

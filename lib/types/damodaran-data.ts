@@ -72,6 +72,26 @@ export interface DamodaranDatasetCoverageRow {
   notes: string;
 }
 
+export interface CanonicalDamodaranIndustryRow {
+  id: string;
+  industryName: string;
+  normalizedIndustryName: string;
+  sourceDatasets: string[];
+  presentInCoreDatasets: string[];
+  missingCoreDatasets: string[];
+  coverageStatus: "Complete" | "Partial" | "Missing Core Data" | "Review" | "Unknown";
+  canonicalStatus:
+    | "Canonical"
+    | "Review"
+    | "Duplicate / Variant"
+    | "Excluded Non-Industry"
+    | "Missing Core Coverage";
+  isCanonical: boolean;
+  isLineWrapVariant: boolean;
+  possibleCanonicalMatch: string | null;
+  notes: string;
+}
+
 export interface DamodaranImportSummary {
   success: boolean;
   startedAt: string;

@@ -3,6 +3,10 @@
 ## Intent
 Define interfaces and data contracts between input/reference data and planned valuation engine stages.
 
+## Source of Truth
+- Master Specification v1.5 is the active source of truth for benchmark-first industry logic.
+- Industry Benchmark Config replaces old visible Sector / Industry Mapping naming in primary user workflows.
+
 ## Planned Engine Contract List
 1. Forecast & Fade Engine Contract
 2. Reinvestment & FCFF Engine Contract
@@ -166,3 +170,92 @@ Define interfaces and data contracts between input/reference data and planned va
 - Added explicit boundary contract:
   - sector mapping does not directly set Intrinsic Value per Share
   - no beta/WACC/FCFF valuation math execution in this phase
+
+## Phase 4C-2B-2 Coverage
+- Added sector candidate-generation contract:
+  - generates reviewable primary/secondary/fallback benchmark candidates per ISM-sector
+  - preserves existing nonblank user values unless overwrite is explicitly requested
+- Added benchmark validation contract:
+  - exact match required against Damodaran Industry Master List for nonblank values
+  - normalized/line-wrap variants remain review warnings (not silently promoted)
+- Added benchmark-key assignment contract:
+  - table keys derive from validated primary benchmark
+  - key assignment depends on coverage availability by dataset
+  - unavailable coverage keeps key blank and flags review warnings
+- Added candidate guide/readiness persistence contract for Data Hub review workflows
+- Added explicit boundary contract retention:
+  - mapping recommends context and does not force valuation assumptions
+  - no WACC, Cost of Equity, FCFF, Terminal Value, Bridge, or Intrinsic Value math
+
+## Phase 4C-2B-3 Coverage
+- Added benchmark-first mapping contract:
+  - Damodaran benchmark is primary reference-data key
+  - ISM-sector is downstream internal classification/suggestion
+- Added reverse helper contract:
+  - ISM -> benchmark mapping remains available as helper view only
+- Added benchmark-first generation contract and persistence:
+  - one mapping row per Damodaran Industry Master benchmark
+  - financial and REIT/NAV-style real-estate benchmarks flagged excluded/special review
+  - ambiguous benchmarks flagged review-required (not clean OK)
+- Added company-workspace scaffold contract:
+  - benchmark-primary selection shown
+  - ISM suggestion and alternatives shown
+  - no valuation engine math integration
+
+## Phase 4C-2B-4 Coverage
+- Added benchmark-first default-recommendation contract fields:
+  - default stage type
+  - cyclicality flag
+  - history requirement
+  - normalization requirement
+  - stable margin/ROC/sales-to-capital rule hints
+  - forecast fade hint
+  - terminal readiness hint
+- Added benchmark-first secondary/fallback recommendation contract:
+  - related secondary benchmarks are review support only
+  - fallback benchmark is review/reference only
+  - neither auto-substitutes the primary benchmark
+- Added preservation contract:
+  - existing benchmark-first manual row edits are preserved unless overwrite is explicitly enabled
+- Added scope boundary confirmation:
+  - recommendation metadata only
+  - no valuation math execution
+
+## Phase 4C-2B-5 Coverage
+- Added Industry Benchmark Config v1.5 contract layer:
+  - benchmark-first canonical row contract (`IndustryBenchmarkConfigRow`)
+  - benchmark-config-first repository methods (`getIndustryBenchmarkConfigRows`, `getIndustryBenchmarkConfigByBenchmark`, `generateAndPersistIndustryBenchmarkConfig`, `validateIndustryBenchmarkConfigCompleteness`)
+- Added benchmark pull-key authority contract on benchmark-primary rows:
+  - beta/margin/ROC-ROIC/reinvestment-sales-to-capital/working-capital/tax/WACC-sanity/multiples-sanity keys
+- Added benchmark usage contract:
+  - benchmark config supports risk, margins, ROC/ROIC, reinvestment, sales-to-capital, WACC sanity, tax, cyclicality, forecast/fade, and terminal checks
+  - benchmark config does not mechanically replace company-specific forecast assumptions
+- Added multiples policy contract:
+  - pricing multiples are sanity-only and do not feed official intrinsic value outputs
+- Added display contract:
+  - Damodaran benchmark is primary industry display
+  - ISM-sector is derived/display-only
+- Scope boundary retained:
+  - no Beta Engine/WACC valuation math added in this phase
+
+## Phase 4C-2B-6 Coverage
+- Added exact v1.5 table contracts (source-of-truth from local spec file):
+  - `tblIndustryBenchmarkHeader`
+  - `tblDamodaranIndustryUniverse`
+  - `tblIndustryBenchmarkConfig`
+  - `tblBenchmarkDataPullKeys`
+  - `tblIndustryISMDisplayMap`
+  - `tblIndustryBenchmarkRules`
+  - `tblIndustryBenchmarkStatusValues`
+- Added exact-table repository methods:
+  - `getIndustryBenchmarkHeader`
+  - `getDamodaranIndustryUniverse`
+  - `getIndustryBenchmarkConfigTable`
+  - `getBenchmarkDataPullKeysTable`
+  - `getIndustryISMDisplayMapTable`
+  - `getIndustryBenchmarkRules`
+  - `getIndustryBenchmarkStatusValues`
+  - `seedExactIndustryBenchmarkConfigV15`
+- Generated/candidate mapping remains internal helper only (explicitly not source of truth).
+- ISM map remains display-only and must include `Display only - no model-driving effect`.
+- Pull keys are read from exact `tblBenchmarkDataPullKeys`.

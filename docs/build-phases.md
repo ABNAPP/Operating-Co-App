@@ -142,6 +142,64 @@
 - [x] Added Company Workspace scaffold for ISM-sector dropdown and mapping-required status
 - [x] Confirmed no valuation math added in this phase
 
+## Phase 4C-2B-2 - Sector Mapping Candidate Logic
+- [x] Added candidate generation service with reviewable sector-to-benchmark suggestions
+- [x] Added validation against Damodaran Industry Master List before mapping persistence
+- [x] Added candidate guide persistence and readiness refresh updates
+- [x] Added protected generate-candidates endpoint (`POST /api/data-hub/sector-industry-mapping/generate-candidates`)
+- [x] Added benchmark key assignment logic gated by validated primary benchmark and coverage availability
+- [x] Preserved existing nonblank user benchmark fields unless overwrite is explicitly requested
+- [x] Updated Data Hub Sector Mapping page with candidate status, guide, key details, and validation summary
+- [x] Updated Company Workspace scaffold to show recommended benchmark, review flag, status, and notes
+- [x] Confirmed legacy Google Sheet mapping remains context only (not source-of-truth)
+- [x] Confirmed no valuation math added in this phase
+
+## Phase 4C-2B-3 - Benchmark-first Sector Mapping Correction
+- [x] Added benchmark-first mapping row model (`DamodaranBenchmarkToIsmSectorRow`)
+- [x] Added benchmark-first candidate generation service
+- [x] Added benchmark-first persistence collection + repository helpers
+- [x] Added protected benchmark-first generation endpoint (`POST /api/data-hub/sector-industry-mapping/generate-benchmark-first`)
+- [x] Updated Sector Mapping page with benchmark-first primary table
+- [x] Kept ISM -> Benchmark view as labeled reverse/helper mapping view
+- [x] Updated Company Workspace scaffold to benchmark-first selection flow
+- [x] Confirmed no valuation math added in this phase
+
+## Phase 4C-2B-4 - Benchmark-first Stage/Cyclicality Defaults
+- [x] Extended benchmark-first mapping rows with stage/cyclicality/default recommendation fields
+- [x] Added benchmark default-rules helper for transparent recommendation logic
+- [x] Populated benchmark-first rows with stage/history/normalization/rule hints
+- [x] Preserved existing benchmark-first manual edits unless overwrite is explicitly requested
+- [x] Added secondary/fallback benchmark recommendation fields (review-only, not auto-substitution)
+- [x] Updated benchmark-first generation endpoint summary with default-population counts
+- [x] Updated Sector Mapping UI to prioritize benchmark-first recommendation fields
+- [x] Kept reverse ISM -> benchmark helper view as secondary/collapsed
+- [x] Updated Company Workspace scaffold to show benchmark-first stage/cyclicality recommendations
+- [x] Confirmed no valuation math added in this phase
+
+## Phase 4C-2B-5 - Industry Benchmark Config v1.5 Contract Consolidation
+- [x] Reframed visible module naming to Industry Benchmark Config (benchmark-first)
+- [x] Added v1.5 benchmark-first canonical contract type (`IndustryBenchmarkConfigRow`)
+- [x] Added benchmark-config-first repository adapters (`get*`, `generate*`, `validate*`)
+- [x] Added benchmark-derived ISM display-map adapters (`getIndustryISMDisplayMap`, `getISMDisplayByBenchmark`)
+- [x] Moved benchmark pull-key authority to benchmark-primary config rows
+- [x] Kept ISM-first logic as internal helper/collapsed support only
+- [x] Updated Company Workspace to benchmark-primary display with ISM derived/display-only
+- [x] Updated Dashboard primary industry display to Damodaran benchmark
+- [x] Added Damodaran Data read-only linkage notes to benchmark config and sanity-only multiples
+- [x] Confirmed no valuation math added in this phase
+
+## Phase 4C-2B-6 - Exact v1.5 Industry Benchmark Config Tables
+- [x] Added strict exact-table parser/seed service (`lib/data-hub/industryBenchmarkConfigV15SeedService.ts`)
+- [x] Added explicit table models for all required v1.5 tables
+- [x] Added repository methods for all seven exact tables + exact seed method
+- [x] Data Hub now renders all seven exact v1.5 tables as source of truth
+- [x] Generated/helper tables remain collapsed and clearly marked not source of truth
+- [x] Company Workspace benchmark selection now uses exact universe/config tables
+- [x] Company Workspace ISM-sector now derives from exact `tblIndustryISMDisplayMap`
+- [x] Dashboard keeps Damodaran benchmark primary and ISM-sector secondary display-only
+- [x] Pull keys are shown from exact `tblBenchmarkDataPullKeys`
+- [x] No valuation math added in this phase
+
 ## Phase 5 - Planned Later
 - [ ] Form UX for company inputs and period editing
 - [ ] Server-side API adapter hardening and observability

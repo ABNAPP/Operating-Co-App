@@ -1,7 +1,12 @@
-# Main Valuation Flow (Phase 0-4C-2B-1)
+# Main Valuation Flow (Phase 0-4C-2B-6)
 
 ## Canonical Flow
 Input -> Reference Data -> Global Valuation Engine -> Company Valuation Engine Results -> Outputs/Dashboard
+
+## Source of Truth
+- Master Specification v1.5 is the active benchmark-first source of truth for industry configuration.
+- Industry Benchmark Config is the primary module for benchmark-first status/defaults/pull keys; ISM-sector is display-only.
+- Exact v1.5 benchmark tables are now parsed/displayed as source of truth (not generated candidates).
 
 ## Global Valuation Engine (Planned)
 - Forecast & Fade Engine
@@ -18,7 +23,7 @@ Input -> Reference Data -> Global Valuation Engine -> Company Valuation Engine R
 - Company Valuation Engine Results = one company's output path and decisions.
 - Dashboard displays outputs only and does not run valuation calculations.
 
-## Reference Data Refresh Policy (Phase 4C-2B-1)
+## Reference Data Refresh Policy (Phase 4C-2B-4)
 - Riskfree Rates and FX Rates refresh automatically once per day via Vercel Cron.
 - Scheduled cron target: 06:00 UTC (`0 6 * * *`).
 - Same cron route orchestrates both refreshes with explicit order:
@@ -65,6 +70,39 @@ Input -> Reference Data -> Global Valuation Engine -> Company Valuation Engine R
   - old Google Sheet mapping is context only, not app source-of-truth
   - candidate mapping logic is deferred to Phase 4C-2B-2
   - no valuation math integration in this phase
+- Phase 4C-2B-2 implements Sector Mapping candidate logic module:
+  - generates reviewable candidate benchmark mappings
+  - validates candidate benchmark names against Damodaran Industry Master List
+  - populates benchmark keys only when validated primary benchmark and coverage permit
+  - preserves user-edited benchmark values by default unless explicit overwrite mode is requested
+  - mapping remains advisory and does not directly drive valuation outputs
+- Phase 4C-2B-3 corrects mapping architecture to benchmark-first:
+  - Damodaran benchmark is primary key for reference-data lookup
+  - ISM-sector is internal classification suggested from benchmark mapping
+  - reverse ISM -> benchmark candidates remain helper-only support
+  - benchmark-first mapping still recommends/flags and does not calculate valuation
+- Phase 4C-2B-4 extends benchmark-first rows with recommendation metadata:
+  - default stage type
+  - cyclicality flag
+  - history/normalization hints
+  - stable margin/ROC/sales-to-capital hints
+  - forecast-fade and terminal-readiness hints
+  - secondary/fallback benchmark review hints
+  - recommendations only; still no valuation math
+- Phase 4C-2B-5 consolidates Industry Benchmark Config contracts:
+  - visible naming uses Industry Benchmark Config (route compatibility may keep `/sector-industry-mapping`)
+  - selected Damodaran Industrial Benchmark is the primary industry anchor
+  - ISM-sector is derived/display-only
+  - benchmark pull keys are benchmark-primary config authority
+  - pricing multiples remain sanity-only
+  - no valuation math is added
+- Phase 4C-2B-6 enforces exact v1.5 table source-of-truth:
+  - `tblIndustryBenchmarkHeader`, `tblDamodaranIndustryUniverse`, `tblIndustryBenchmarkConfig`,
+    `tblBenchmarkDataPullKeys`, `tblIndustryISMDisplayMap`, `tblIndustryBenchmarkRules`,
+    `tblIndustryBenchmarkStatusValues`
+  - generated/candidate mapping remains internal helper only
+  - pull keys come from `tblBenchmarkDataPullKeys`
+  - ISM map remains display-only (`Display only - no model-driving effect`)
 
 ## Phase 4A Correction Notes
 - Riskfree selection is now explicitly tied to valuation currency mapping.
@@ -79,6 +117,8 @@ Input -> Reference Data -> Global Valuation Engine -> Company Valuation Engine R
 - Phase 4C-1 includes secure server-side Country Risk / ERP import scaffolding and Data Hub presentation.
 - Phase 4C-2A includes secure server-side Damodaran industry dataset import scaffolding and Data Vault presentation.
 - Phase 4C-2B-1 includes secure server-side Sector Mapping foundation seed scaffolding and Data Hub presentation.
+- Phase 4C-2B-2 includes secure server-side Sector Mapping candidate generation scaffolding and review presentation.
+- Phase 4C-2B-4 includes secure server-side benchmark-first recommendation-default generation scaffolding and benchmark-primary workspace recommendation presentation.
 - FX remains separate from riskfree and no valuation math is introduced in this phase.
 - Full historical/period-level financial FX conversion remains a future phase.
 - Weighted ERP integration into Risk/WACC engine remains future phase work.

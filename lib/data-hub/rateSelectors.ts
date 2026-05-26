@@ -40,6 +40,10 @@ export function getSelectedFxRate(row: FxPairRateRow): number | null {
     return row.manualOverride;
   }
 
+  if (row.selectedFxRate !== null) {
+    return row.selectedFxRate;
+  }
+
   if (row.liveFxRate !== null) {
     return row.liveFxRate;
   }
@@ -49,18 +53,18 @@ export function getSelectedFxRate(row: FxPairRateRow): number | null {
 
 export function getFxStatus(row: FxPairRateRow): string {
   if (row.fromCurrency === row.toCurrency) {
-    return "OK";
+    return "System";
   }
 
   if (row.manualOverride !== null) {
     return "Manual Override";
   }
 
-  if (row.liveFxRate !== null) {
+  if (row.selectedFxRate !== null || row.liveFxRate !== null) {
     return "OK";
   }
 
-  return "Currency Review / Missing FX or Not Updated";
+  return "Missing / Not Refreshed";
 }
 
 export function buildFxPairRowsFromCurrencyMap(
@@ -86,9 +90,9 @@ export function buildFxPairRowsFromCurrencyMap(
         liveFxRate: sameCurrency ? 1 : null,
         manualOverride: null,
         selectedFxRate: sameCurrency ? 1 : null,
-        source: sourceLabel,
+        source: sameCurrency ? "System" : sourceLabel,
         lastUpdated: now,
-        status: sameCurrency ? "OK" : "Currency Review / Missing FX or Not Updated",
+        status: sameCurrency ? "System" : "Missing / Not Refreshed",
         notes: sameCurrency
           ? "Same-currency pair fixed at 1."
           : "Awaiting Phase 4B provider refresh or manual override.",

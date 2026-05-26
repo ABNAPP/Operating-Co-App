@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ClickableCardLink } from "@/components/clickable-card";
 import {
   DAMODARAN_COUNTRY_RISK_UPDATE_DATE,
   DAMODARAN_SOURCE_NAME,
@@ -6,8 +6,10 @@ import {
   DAMODARAN_SOURCE_URL,
 } from "@/lib/data-hub/damodaranDatasetRegistry";
 import {
+  getCanonicalDamodaranIndustries,
   getDamodaranDatasetRegister,
   getDamodaranImportSummary,
+  refreshCanonicalDamodaranIndustryList,
 } from "@/lib/firestore/repositories/damodaranDataRepository";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +18,11 @@ export default async function DamodaranDataPage() {
 
   const registerResult = await getDamodaranDatasetRegister();
   const importSummaryResult = await getDamodaranImportSummary();
+  let canonicalResult = await getCanonicalDamodaranIndustries();
+  if (canonicalResult.data.length === 0) {
+    await refreshCanonicalDamodaranIndustryList();
+    canonicalResult = await getCanonicalDamodaranIndustries();
+  }
   const dataSource =
     registerResult.source === "firestore" || importSummaryResult.source === "firestore"
       ? "firestore"
@@ -58,6 +65,14 @@ export default async function DamodaranDataPage() {
         return priorityCompare !== 0 ? priorityCompare : a.datasetName.localeCompare(b.datasetName);
       }),
   };
+  const canonicalRows = canonicalResult.data;
+  const canonicalCount = canonicalRows.filter((row) => row.isCanonical).length;
+  const variantCount = canonicalRows.filter((row) => row.canonicalStatus === "Duplicate / Variant").length;
+  const excludedCount = canonicalRows.filter(
+    (row) => row.canonicalStatus === "Excluded Non-Industry",
+  ).length;
+  const canonicalReadiness =
+    canonicalCount >= 90 && canonicalCount <= 110 ? "Ready" : "Review (outside expected range)";
 
   const renderDatasetCards = (rows: typeof allRows) => {
     if (rows.length === 0) {
@@ -67,16 +82,17 @@ export default async function DamodaranDataPage() {
     return (
       <div className="cardGrid">
         {rows.map((row) => (
-          <article key={row.id} className="card">
+          <ClickableCardLink
+            key={row.id}
+            href={`/data-hub/damodaran-data/${row.id}`}
+            title={row.datasetName}
+          >
             <h3 className="cardTitle">{row.datasetName}</h3>
             <p className="cardMeta">Updated: {row.sourceUpdateDate}</p>
             <p className="cardMeta">Status: {row.importStatus}</p>
             <p className="cardMeta">Rows: {row.rowCount > 0 ? row.rowCount : "No rows imported"}</p>
             <p className="cardMeta">Priority: {row.priority}</p>
-            <p style={{ marginTop: "0.5rem" }}>
-              <Link href={`/data-hub/damodaran-data/${row.id}`}>Open Dataset</Link>
-            </p>
-          </article>
+          </ClickableCardLink>
         ))}
       </div>
     );
@@ -88,7 +104,7 @@ export default async function DamodaranDataPage() {
         <h2 className="sectionHeading">Damodaran Industry Data Vault / Source Register</h2>
         <p className="sectionSubheading">
           Card-based Data Vault navigation for Damodaran benchmark datasets and readiness checks
-          before Sector / Industry Mapping.
+          before Industry Benchmark Config.
         </p>
       </div>
 
@@ -116,6 +132,14 @@ export default async function DamodaranDataPage() {
           Notes: Main page is compact navigation only. Open a dataset card to inspect stored raw
           table rows.
         </p>
+        <p className="cardMeta">
+          Linkage: Damodaran Data Vault feeds Industry Benchmark Config using the canonical
+          industry benchmark universe.
+        </p>
+        <p className="cardMeta">
+          Pricing multiples datasets are sanity-only and must not drive official intrinsic value
+          outputs.
+        </p>
       </div>
 
       <div className="panel">
@@ -128,7 +152,7 @@ export default async function DamodaranDataPage() {
         </p>
         <p className="cardMeta">Industry count: {importSummaryResult.data.industryCount}</p>
         <p className="cardMeta">Coverage matrix rows: {importSummaryResult.data.coverageMatrixRows}</p>
-        <p className="cardMeta">Ready for Sector / Industry Mapping: {readinessStatus}</p>
+        <p className="cardMeta">Ready for Industry Benchmark Config: {readinessStatus}</p>
         <p className="cardMeta">
           Missing core datasets:{" "}
           {missingCoreDatasets.length > 0
@@ -156,6 +180,44 @@ export default async function DamodaranDataPage() {
         <h3 className="cardTitle">Industry Summary Cards</h3>
         <p className="cardMeta">Industry Master List rows: {importSummaryResult.data.industryCount}</p>
         <p className="cardMeta">Coverage Matrix rows: {importSummaryResult.data.coverageMatrixRows}</p>
+      </div>
+
+      <div className="panel">
+        <h3 className="cardTitle">Canonical Industry Master List</h3>
+        <p className="cardMeta">Canonical industry count: {canonicalCount}</p>
+        <p className="cardMeta">Review / variant count: {variantCount}</p>
+        <p className="cardMeta">Excluded non-industry count: {excludedCount}</p>
+        <p className="cardMeta">Coverage status: {canonicalReadiness}</p>
+        <p className="cardMeta">Readiness for Sector Mapping: {canonicalReadiness}</p>
+        <details>
+          <summary className="cardMeta">Open canonical detail table</summary>
+          <div className="tableWrap" style={{ marginTop: "0.6rem" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Industry Name</th>
+                  <th>Coverage Status</th>
+                  <th>Source Datasets</th>
+                  <th>Missing Core Datasets</th>
+                  <th>Canonical Status</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {canonicalRows.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.industryName}</td>
+                    <td>{row.coverageStatus}</td>
+                    <td>{row.sourceDatasets.join(", ") || "None"}</td>
+                    <td>{row.missingCoreDatasets.join(", ") || "None"}</td>
+                    <td>{row.canonicalStatus}</td>
+                    <td>{row.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
       </div>
 
       <div className="panel">

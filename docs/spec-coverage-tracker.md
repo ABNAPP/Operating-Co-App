@@ -86,7 +86,25 @@
 | Runtime persistence note (local vs Vercel) | Built (Phase 4C-2A Persistence Correction) | Docs clarify deployment vs Firestore persistence boundaries |
 | Sector / Industry Mapping foundation | Built (Phase 4C-2B-1) | Official ISM-sector list + blank/reviewable mapping rows + readiness/validation scaffolding |
 | Legacy Google Sheet mapping import | Explicitly excluded | Old sheet is context only; not loaded as source-of-truth mapping rows |
-| Candidate benchmark mapping generation | Not Started | Deferred to Phase 4C-2B-2 with analyst-reviewed candidate logic |
+| Candidate benchmark mapping generation | Built (Phase 4C-2B-2) | Candidate logic fills reviewable benchmark suggestions and preserves user edits by default |
+| Benchmark-to-master validation | Built (Phase 4C-2B-2) | Nonblank benchmark values validate against Damodaran Industry Master List exact names |
+| Sector benchmark key scaffolding | Built (Phase 4C-2B-2) | Beta/margin/reinvestment/working-capital/growth/multiples keys populated only when validated primary + coverage support |
+| Benchmark-first mapping direction | Built (Phase 4C-2B-3) | Damodaran benchmark -> ISM is primary; ISM -> benchmark remains helper/reverse view |
+| Company benchmark-first scaffold | Built (Phase 4C-2B-3) | Company workspace shows benchmark-primary selection with ISM-sector suggestion and review flags |
+| Benchmark-first stage/cyclicality defaults | Built (Phase 4C-2B-4) | Stage/cyclicality/history/normalization/rule hints now live on benchmark-first mapping rows |
+| Benchmark-first secondary/fallback benchmark hints | Built (Phase 4C-2B-4) | Related/fallback benchmarks are recommendation-only and canonical-name validated |
+| Reverse helper table secondary status | Built (Phase 4C-2B-4) | ISM -> benchmark helper view remains available and explicitly secondary/collapsed |
+| Industry Benchmark Config naming | Built (Phase 4C-2B-5) | Visible module label now Industry Benchmark Config in Data Hub UI/docs |
+| Benchmark-config-first repository contract | Built (Phase 4C-2B-5) | Added benchmark-config-first adapters without physical collection migration |
+| Benchmark pull-key authority on benchmark-primary rows | Built (Phase 4C-2B-5) | Beta/margin/ROC/reinvestment/WC/tax/WACC sanity/multiples sanity keys live on benchmark rows |
+| ISM display map contract | Built (Phase 4C-2B-5) | ISM mapping is derived display-only via benchmark-first config |
+| ISM sector role | Built (Phase 4C-2B-5) | ISM-sector is derived/display-only and not a primary valuation driver |
+| Dashboard benchmark-first industry display | Built (Phase 4C-2B-5) | Dashboard primary industry display uses selected Damodaran benchmark |
+| Pricing multiples policy | Built (Phase 4C-2B-5) | Multiples remain sanity-only and not official intrinsic value inputs |
+| Exact v1.5 benchmark table parser/seed | Built (Phase 4C-2B-6) | Source file parser now loads exact table rows from `Operating_Co_Template_Master_Specification_v1_5.txt` |
+| Seven exact benchmark tables in Data Hub | Built (Phase 4C-2B-6) | Data Hub now shows all required `tbl*` Industry Benchmark Config tables as source-of-truth |
+| Generated candidate mapping source-of-truth policy | Built (Phase 4C-2B-6) | Generated/helper mapping is explicitly labeled internal only and not source-of-truth |
+| Pull keys source-of-truth table | Built (Phase 4C-2B-6) | Pull keys are read from exact `tblBenchmarkDataPullKeys` |
 | Global valuation calculations | Not Started | Deferred to later phase |
 | API integrations (FRED/market/FX) | Not Started | Deferred; no live API calls |
 | Real review logic execution | Not Started | Deferred; severity model currently structural only |

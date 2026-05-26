@@ -1,11 +1,13 @@
 import "server-only";
-import { getDamodaranIndustryMasterList } from "@/lib/firestore/repositories/damodaranDataRepository";
+import { getCanonicalDamodaranIndustries } from "@/lib/firestore/repositories/damodaranDataRepository";
 import type {
   SectorIndustryMappingRow,
   SectorMappingReadinessRow,
   SectorMappingStatusValue,
 } from "@/lib/types";
 
+// Validation here primarily supports legacy/helper ISM-first rows.
+// Benchmark-first Industry Benchmark Config completeness is validated via repository adapters.
 function normalizeName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -96,8 +98,11 @@ export async function validateSectorMappingsAgainstDamodaranMaster(
   warnings: string[];
   errors: string[];
 }> {
-  const damodaranMaster = await getDamodaranIndustryMasterList();
-  const masterNames = damodaranMaster.data.map((row) => row.industryName).filter(Boolean);
+  const damodaranCanonical = await getCanonicalDamodaranIndustries();
+  const masterNames = damodaranCanonical.data
+    .filter((row) => row.isCanonical)
+    .map((row) => row.industryName)
+    .filter(Boolean);
   const exactNames = new Set(masterNames);
   const normalizedNames = new Set(masterNames.map((name) => normalizeName(name)));
   const warnings: string[] = [];

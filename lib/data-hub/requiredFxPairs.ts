@@ -1,5 +1,6 @@
 import "server-only";
 import { Timestamp } from "firebase-admin/firestore";
+import { writeFxRatesCache } from "@/lib/data-hub/fxCacheStore";
 import { getSelectedFxRate } from "@/lib/data-hub/rateSelectors";
 import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { COLLECTIONS } from "@/lib/firestore/collections";
@@ -260,6 +261,9 @@ export async function ensureRequiredFxPairsForCompanies(): Promise<EnsureRequire
         created += 1;
       }
     }
+
+    const finalSnapshot = await db.collection(COLLECTIONS.fxRates).get();
+    await writeFxRatesCache(finalSnapshot.docs.map((item) => item.data() as FxPairRateRow));
 
     return {
       ok: true,
