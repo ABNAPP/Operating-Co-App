@@ -502,4 +502,219 @@ th {
   padding: 0.35rem 0.7rem;
   background: #f8faff;
   font-size: 0.82rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tabPill:hover {
+  background: #eef3ff;
+}
+
+.tabPillActive {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  font-weight: 600;
+}
+
+.manualInputsWorkspace {
+  display: grid;
+  gap: 1rem;
+}
+
+.manualInputBanner {
+  border-left: 4px solid #93c5fd;
+}
+
+.manualInputBannerTitle {
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.manualInputScaffoldNote {
+  margin-top: 0.35rem;
+}
+
+.manualInputDirtyNotice {
+  color: var(--yellow);
+  font-size: 0.88rem;
+  margin-top: 0.25rem;
+}
+
+.manualInputsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.manualInputSectionFull {
+  grid-column: 1 / -1;
+}
+
+.manualInputSectionDesc {
+  margin-bottom: 0.65rem;
+}
+
+.manualInputSubheading {
+  margin: 0.75rem 0 0.35rem;
+  font-weight: 600;
+}
+
+.manualInputFieldGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.65rem 0.85rem;
+}
+
+.manualInputField {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.manualInputLabel {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.manualInputControl {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.9rem;
+  width: 100%;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.manualInputControl:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: 1px;
+}
+
+.manualInputControlReadOnly {
+  background: #f3f4f6;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.manualInputHint {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.manualInputFooter {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.manualInputSaveButton {
+  justify-self: start;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+  background: #e5e7eb;
+  color: var(--muted);
+  font-size: 0.88rem;
+  cursor: not-allowed;
+}
+
+.manualInputSaveButtonActive {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.manualInputSaveButtonActive:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.manualInputSaveButtonActive:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.manualInputSaveSuccess {
+  color: var(--green);
+  font-size: 0.88rem;
+}
+
+.manualInputSaveError {
+  color: var(--red);
+  font-size: 0.88rem;
+}
+
+.manualInputWiringContract {
+  margin-top: 0.25rem;
+}
+
+.manualInputWiringGroups {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.manualInputWiringGroup {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  background: #fafbff;
+}
+
+.manualInputWiringGroupSummary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+}
+
+.manualInputWiringGroupSummary::-webkit-details-marker {
+  display: none;
+}
+
+.manualInputWiringGroupMeta {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.manualInputWiringFieldList {
+  list-style: none;
+  margin: 0.5rem 0 0.25rem;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.manualInputWiringFieldRow {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.82rem;
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.manualInputWiringFieldLabel {
+  font-weight: 500;
+}
+
+.manualInputWiringFieldKey {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.manualInputWiringFieldTarget {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 900px) {
+  .manualInputsGrid {
+    grid-template-columns: 1fr;
+  }
 }

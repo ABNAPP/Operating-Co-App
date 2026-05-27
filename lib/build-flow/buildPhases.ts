@@ -60,7 +60,12 @@ export const CURRENT_BUILD_PHASES: BuildPhaseItem[] = [
   { id: "dcf-pv-engine", label: "DCF / PV Engine", status: "Foundation" },
   { id: "firm-equity-bridge", label: "Firm-to-Equity Bridge", status: "Foundation" },
   { id: "intrinsic-share", label: "Intrinsic Value / Share", status: "Foundation" },
-  { id: "mos-decision", label: "MOS / Decision Layer", status: "Not started" },
+  { id: "mos-decision", label: "MOS / Decision Layer", status: "Foundation" },
+  {
+    id: "dashboard-decision",
+    label: "Dashboard decision integration",
+    status: "Foundation",
+  },
 ];
 
 /**
@@ -247,7 +252,14 @@ export const FLOWCHART_LAYERS: FlowchartLayer[] = [
         id: "intrinsic-share",
         label: "Intrinsic Value / Share",
         description:
-          "Intrinsic Value / Share from Equity Value and selected diluted shares only — not connected to MOS, entry price, or Dashboard decisions.",
+          "Intrinsic Value / Share from Equity Value and selected diluted shares only — not connected to official Dashboard buy/sell/hold decisions.",
+        status: "Ready",
+      },
+      {
+        id: "mos-decision",
+        label: "MOS / Decision Layer (Foundation)",
+        description:
+          "MOS %, entry price, and foundation-only Above/Below Required MOS outcome — not an official Dashboard decision and no Buy/Sell/Hold logic.",
         status: "Ready",
       },
     ],
@@ -269,8 +281,9 @@ export const FLOWCHART_LAYERS: FlowchartLayer[] = [
       {
         id: "dashboard",
         label: "Dashboard",
-        description: "Display-only official/support outputs",
-        status: "Done",
+        description:
+          "Foundation decision integration table — maps bundle outputs; not official Buy/Sell/Hold",
+        status: "Ready",
       },
       {
         id: "review-flags",
@@ -280,8 +293,9 @@ export const FLOWCHART_LAYERS: FlowchartLayer[] = [
       },
       {
         id: "decision-support",
-        label: "Future Decision Support",
-        description: "Entry/exit, MOS, decision status (engines pending)",
+        label: "Official Dashboard Buy/Sell/Hold",
+        description:
+          "Official investment decision logic — not started; Dashboard currently shows foundation mapping only.",
         status: "Not started",
       },
     ],
@@ -301,15 +315,18 @@ export const IMPORTANT_RULES = [
   "Terminal Value foundation calculates terminal FCFF and Gordon terminal value only — not discounted, not DCF/PV, and not connected to bridge, intrinsic value, or Dashboard decision logic.",
   "DCF/PV foundation calculates PV of forecast FCFF and PV of terminal value only — no bridge, equity value, intrinsic value, or Dashboard decision logic.",
   "Firm-to-Equity Bridge foundation calculates Equity Value from Value of Operating Assets and explicit bridge adjustments only — no intrinsic value per share, MOS, entry price, or Dashboard decision logic.",
-  "Intrinsic Value / Share foundation calculates per-share value from Equity Value and explicit share-count scaffold only — no MOS, entry price, buy/sell/hold, or Dashboard decision logic.",
+  "Intrinsic Value / Share foundation calculates per-share value from Equity Value and explicit share-count scaffold only — no official Dashboard buy/sell/hold decision logic.",
+  "MOS / Decision foundation calculates upside/downside, MOS %, entry price, and foundation-only Above/Below Required MOS outcome — not an official Dashboard decision and no Buy/Sell/Hold logic.",
+  "Dashboard Decision Integration maps foundation bundle outputs to the Dashboard table — foundation-only, not official Buy/Sell/Hold.",
+  "Official Dashboard buy/sell/hold decision logic remains not started.",
   "No full valuation chain math until an approved implementation phase.",
 ] as const;
 
 export const NEXT_RECOMMENDED_STEP = {
-  title: "MOS / Decision Layer",
+  title: "Official Dashboard Buy/Sell/Hold",
   status: "Not started",
   description:
-    "Next phase after Intrinsic Value / Share foundation: MOS and decision support — intrinsic outputs remain foundation-only and are not connected to Dashboard buy/sell/hold logic until approved.",
+    "Next phase after Dashboard Decision Integration foundation: official investment decision logic — foundation MOS outcome must not be treated as Buy/Sell/Hold until approved.",
 } as const;
 
 /** @deprecated Use FLOWCHART_LAYERS for visual map. */

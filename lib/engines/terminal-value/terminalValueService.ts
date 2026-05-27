@@ -7,6 +7,7 @@ import type {
   TerminalValueMethod,
 } from "@/lib/types/terminal-value-engine";
 import { computeTerminalValueFromInput as computeTerminalValueFromInputMath } from "@/lib/engines/terminal-value/terminalValueMath";
+import type { FoundationComputeOptions } from "@/lib/engines/company-foundation/companyFoundationTypes";
 import { computeForecastFadeForCompany } from "@/lib/engines/forecast-fade/forecastFadeService";
 import { computeReinvestmentFcffForCompany } from "@/lib/engines/reinvestment-fcff/reinvestmentFcffService";
 import { computeWaccForCompany } from "@/lib/engines/wacc/waccService";
@@ -22,6 +23,7 @@ function resolveTerminalMethod(company: CompanyDataModel): TerminalValueMethod |
 
 export async function buildTerminalValueInputForCompany(
   company: CompanyDataModel,
+  options?: FoundationComputeOptions,
 ): Promise<TerminalValueInput> {
   const selectedBenchmark = company.identity.damodaranIndustrialBenchmark ?? "";
 
@@ -47,10 +49,12 @@ export async function buildTerminalValueInputForCompany(
     };
   }
 
+  const upstream = options?.upstream;
   const [forecastFadeBundle, waccBundle, reinvestmentFcffBundle] = await Promise.all([
-    computeForecastFadeForCompany(company),
-    computeWaccForCompany(company),
-    computeReinvestmentFcffForCompany(company),
+    upstream?.forecastFadeBundle ?? computeForecastFadeForCompany(company),
+    upstream?.waccBundle ??
+      computeWaccForCompany(company, { upstream: { betaPolicyBundle: upstream?.betaPolicyBundle } }),
+    upstream?.reinvestmentFcffBundle ?? computeReinvestmentFcffForCompany(company),
   ]);
 
   const reinvestmentInput = reinvestmentFcffBundle.input;
@@ -86,11 +90,14 @@ export async function buildTerminalValueInputForCompany(
   return terminalInput;
 }
 
-export async function computeTerminalValueForCompany(company: CompanyDataModel): Promise<{
+export async function computeTerminalValueForCompany(
+  company: CompanyDataModel,
+  options?: FoundationComputeOptions,
+): Promise<{
   input: TerminalValueInput;
   result: TerminalValueResult;
 }> {
-  const input = await buildTerminalValueInputForCompany(company);
+  const input = await buildTerminalValueInputForCompany(company, options);
   const result = computeTerminalValueFromInputMath(input);
   return { input, result };
 }

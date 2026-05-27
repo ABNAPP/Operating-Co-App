@@ -7,6 +7,7 @@ import type {
   IntrinsicValueResult,
 } from "@/lib/types/intrinsic-value-engine";
 import { computeIntrinsicValueFromInput as computeIntrinsicValueFromInputMath } from "@/lib/engines/intrinsic-value/intrinsicValueMath";
+import type { FoundationComputeOptions } from "@/lib/engines/company-foundation/companyFoundationTypes";
 import { computeEquityBridgeForCompany } from "@/lib/engines/equity-bridge/equityBridgeService";
 
 function resolveShareScaffold(
@@ -39,6 +40,7 @@ function resolveFxRateToValuationCurrency(
 
 export async function buildIntrinsicValueInputForCompany(
   company: CompanyDataModel,
+  options?: FoundationComputeOptions,
 ): Promise<IntrinsicValueInput> {
   const selectedBenchmark = company.identity.damodaranIndustrialBenchmark ?? "";
   const valuationCurrency = company.currencies.valuationCurrency ?? null;
@@ -67,7 +69,9 @@ export async function buildIntrinsicValueInputForCompany(
     };
   }
 
-  const equityBridgeBundle = await computeEquityBridgeForCompany(company);
+  const equityBridgeBundle =
+    options?.upstream?.equityBridgeBundle ??
+    (await computeEquityBridgeForCompany(company, { upstream: options?.upstream }));
   const scaffold = resolveShareScaffold(company);
   const market = company.marketInputs;
 
@@ -116,11 +120,14 @@ export async function buildIntrinsicValueInputForCompany(
   };
 }
 
-export async function computeIntrinsicValueForCompany(company: CompanyDataModel): Promise<{
+export async function computeIntrinsicValueForCompany(
+  company: CompanyDataModel,
+  options?: FoundationComputeOptions,
+): Promise<{
   input: IntrinsicValueInput;
   result: IntrinsicValueResult;
 }> {
-  const input = await buildIntrinsicValueInputForCompany(company);
+  const input = await buildIntrinsicValueInputForCompany(company, options);
   const result = computeIntrinsicValueFromInputMath(input);
   return { input, result };
 }

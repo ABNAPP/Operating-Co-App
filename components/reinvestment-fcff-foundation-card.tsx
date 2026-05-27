@@ -1,21 +1,10 @@
+import { FoundationSourceNotes } from "@/components/foundation-source-notes";
+import { FoundationStatusBadge } from "@/components/foundation-status-badge";
 import type {
   ReinvestmentFcffInput,
   ReinvestmentFcffResult,
 } from "@/lib/types/reinvestment-fcff-engine";
 import { formatAmountMillions, formatNumber, formatPercent } from "@/lib/utils/formatters";
-
-function statusBadgeClass(status: string) {
-  if (status === "Ready") {
-    return "badge badgeGreen";
-  }
-  if (status === "Review") {
-    return "badge badgeYellow";
-  }
-  if (status === "Not Applicable") {
-    return "badge badgeBlue";
-  }
-  return "badge badgeRed";
-}
 
 function formatAmount(value: number | null) {
   if (value === null || !Number.isFinite(value)) {
@@ -38,12 +27,15 @@ function formatMethod(value: ReinvestmentFcffResult["selectedReinvestmentMethod"
 interface ReinvestmentFcffFoundationCardProps {
   input: ReinvestmentFcffInput;
   result: ReinvestmentFcffResult;
+  displayStatus?: string;
 }
 
 export function ReinvestmentFcffFoundationCard({
   input,
   result,
+  displayStatus,
 }: ReinvestmentFcffFoundationCardProps) {
+  const statusLabel = displayStatus ?? result.status;
   const uniqueWarnings = [...new Set(result.warnings)];
   const uniqueNotes: string[] = [];
   const seenNotes = new Set<string>();
@@ -75,7 +67,7 @@ export function ReinvestmentFcffFoundationCard({
         <div>
           <dt>Status</dt>
           <dd>
-            <span className={statusBadgeClass(result.status)}>{result.status}</span>
+            <FoundationStatusBadge displayStatus={statusLabel} />
           </dd>
         </div>
         <div>
@@ -170,16 +162,7 @@ export function ReinvestmentFcffFoundationCard({
         <p className="cardMeta">{result.methodComparison.comparisonNote}</p>
       ) : null}
 
-      {uniqueNotes.length > 0 ? (
-        <details className="betaReferenceDetails">
-          <summary>Source notes</summary>
-          {uniqueNotes.map((note, idx) => (
-            <p key={`note-${idx}-${note.slice(0, 40)}`} className="cardMeta">
-              {note}
-            </p>
-          ))}
-        </details>
-      ) : null}
+      <FoundationSourceNotes notes={uniqueNotes} />
     </article>
   );
 }

@@ -1,0 +1,55 @@
+rules_version = '2';
+
+// Operating Co App — Firestore Security Rules
+//
+// valuationResults + dashboardRows: client READ only (persisted valuation outputs).
+// All other collections: existing dev scaffold (read + client write) unchanged.
+// Local Admin SDK (batch script, cron, dev seed) bypasses these rules entirely.
+//
+// Publish: Firebase Console → Firestore Database → Rules → Publish
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Persisted valuation outputs — READ-ONLY from browser / Firebase client SDK
+    // -------------------------------------------------------------------------
+
+    match /valuationResults/{cleanTicker} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+
+    match /dashboardRows/{cleanTicker} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // All other top-level collections (companies, reference data, Data Hub, …)
+    // -------------------------------------------------------------------------
+    // Preserves prior open dev behaviour: client can still seed/read companies,
+    // companyInputs, riskfreeRates, etc. Tighten to `request.auth != null` when
+    // Firebase Authentication is enabled.
+
+    match /{collection}/{documentId} {
+      allow read: if true;
+      allow create, update, delete: if isClientWritableCollection(collection);
+    }
+
+    // Nested paths (subcollections), if added later
+    match /{collection}/{documentId}/{path=**} {
+      allow read: if true;
+      allow create, update, delete: if isClientWritableCollection(collection);
+    }
+  }
+}
+
+// Collections that must never receive client writes (Admin SDK only).
+function isValuationOutputCollection(collection) {
+  return collection == 'valuationResults' || collection == 'dashboardRows';
+}
+
+function isClientWritableCollection(collection) {
+  return !isValuationOutputCollection(collection);
+}

@@ -142,6 +142,14 @@
 | Intrinsic Value / Share foundation QA script | Built (Phase 4C-2B-17) | `scripts/qa-intrinsic-value-foundation.mjs` |
 | Intrinsic Value / Share Engine docs page | Built (Phase 4C-2B-17) | `/engine-docs/intrinsic-value-engine` |
 | Company Workspace Intrinsic Value / Share card | Built (Phase 4C-2B-17) | Intrinsic Value / Share Foundation on `/companies/[cleanTicker]` |
+| MOS / Decision Layer Engine Foundation | Built (Phase 4C-2B-18) | MOS %, entry price, foundation-only Above/Below Required MOS outcome |
+| MOS / Decision foundation QA script | Built (Phase 4C-2B-18) | `scripts/qa-mos-decision-foundation.mjs` |
+| MOS / Decision Engine docs page | Built (Phase 4C-2B-18) | `/engine-docs/mos-decision-engine` |
+| Company Workspace MOS / Decision card | Built (Phase 4C-2B-18) | MOS / Decision Foundation on `/companies/[cleanTicker]` via foundation bundle |
+| Dashboard decision integration mapping | Built (Phase 4C-2B-19) | Foundation bundle → Dashboard presentation output |
+| Dashboard foundation table UI | Built (Phase 4C-2B-19) | `/` shows foundation columns; legacy mock decision separate |
+| Dashboard decision integration QA | Built (Phase 4C-2B-19) | `scripts/qa-dashboard-decision-integration-foundation.mjs` |
+| Official Dashboard Buy/Sell/Hold | Not started | Separate from foundation MOS outcome |
 | Beta reference service | Built (Phase 4C-2B-9) | `lib/engines/beta/betaReferenceService.ts` — read-only, no raw data mutation |
 | Company Workspace beta card | Built (Phase 4C-2B-9) | Beta Reference / Beta Readiness on `/companies/[cleanTicker]` |
 | Beta Engine docs page | Built (Phase 4C-2B-9) | `/engine-docs/beta-engine` — foundation scope and rules |

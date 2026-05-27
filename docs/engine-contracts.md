@@ -353,9 +353,58 @@ Define interfaces and data contracts between input/reference data and planned va
   - If Equity Value is missing => Intrinsic Value / Share is null (no fake per-share math)
   - If shares are missing or ≤ 0 => null per-share output
   - If share unit is missing or not `millions` | `absolute` => Review/Missing with null output
-- Not implemented in this phase: MOS, entry price, buy/sell/hold, upside/downside, Dashboard decisions
-- Current share price is display-only when provided; it does not drive decisions in this phase.
+- Not implemented in this phase: official Dashboard buy/sell/hold decision wiring
+- Current share price is display-only when provided on the intrinsic card; MOS foundation uses price for MOS math.
 - ISM-sector must not be used to drive intrinsic value logic.
+
+## Phase 4C-2B-18 Coverage (MOS / Decision Layer Foundation)
+- `computeMosDecisionForCompany(company, options?)` — assembles inputs from Intrinsic Value foundation (optional upstream bundle) and explicit decision-layer scaffold.
+- Formulas:
+  - Upside / Downside % = Margin of Safety % = (Intrinsic Value / Share − Current Share Price) ÷ Current Share Price
+  - Entry Price = Intrinsic Value / Share × (1 − Required MOS)
+  - Foundation outcome: `Above Required MOS` when MOS % ≥ Required MOS; `Below Required MOS` otherwise
+- Guardrails:
+  - Missing intrinsic => Missing status, null MOS metrics and decision outcome
+  - Missing/invalid current price => Missing/Review, null MOS metrics
+  - Missing required MOS => Review; entry price and decision outcome withheld
+  - Upstream intrinsic Review/cyclical notes propagate to Review where applicable
+- Not implemented in this phase: official Dashboard decision output, Buy/Sell/Hold logic, Dashboard decision wiring
+- MOS / Decision Foundation is not an official Dashboard decision.
+- ISM-sector must not be used to drive MOS / decision logic.
+
+## Phase 4C-2B-23 Coverage (Manual Inputs Market Overlay Wiring)
+- `wiringStatus: "market_overlay_wired"` — saved `overrides.market.currentPrice` and `overrides.decisionLayerInputs.minimumMOSForApprove` only.
+- `resolveFoundationBundleCompanies` / `getCachedCompanyFoundationBundle`: valuation from **base** company; MOS from **marketOverlayCompany**.
+- Price or required MOS change → market fingerprint mismatch → `[foundation-cache] STALE` (market overlay only), not full valuation recompute.
+- Full merge (`mergeStoredCompanyWithManualInputs`) remains Inputs-tab display only for non-overlay fields.
+- Not implemented: `engine_wired`, Buy/Sell/Hold, gateway, hard gate, shadow valuation.
+
+## Phase 4C-2B-21–22 Coverage (Manual Inputs Persistence + Wiring Contract)
+- Manual inputs persist to `companyInputs/{cleanTicker}` with `wiringStatus: "persistence_only"` until engine wiring is approved.
+- `saveCompanyManualInputs` / `loadCompanyManualInputs` — server-only via `manualInputsPersistenceService.ts`.
+- Inputs tab merge (`mergeStoredCompanyWithManualInputs`) is display-only in Part 2A/2B-1; valuation engines use base `companies` document.
+- `manualInputsEngineWiringContract.ts` — per-field allowlist (`allowedForFutureEngineWiring`, `status: "not_wired_yet"`).
+- Helpers: `getManualInputWiringContract()`, `getManualInputWiringByEngine()`, `isManualInputAllowedForFutureEngineWiring()`.
+- Not implemented: `engine_wired` merge, valuation fingerprint changes from saved inputs, foundation cache invalidation on save.
+- No Buy/Sell/Hold, gateway, hard gate, shadow valuation, or official Dashboard decision from manual inputs.
+
+## Phase A Coverage (Firestore Valuation Persistence — schema only)
+
+- Canonical full result: `valuationResults/{cleanTicker}` → `ValuationResultDocument` (`lib/types/valuation-results-firestore.ts`).
+- Denormalized dashboard list: `dashboardRows/{cleanTicker}` → `ValuationDashboardSnapshotDocument` (`lib/types/dashboard-snapshot-firestore.ts`).
+- Mappers: `lib/firestore/mappers/valuationResultDocumentMapper.ts` (`buildPersistedValuationArtifacts`).
+- Repositories (read/write scaffold): `valuationResultsRepository.ts`, `valuationDashboardRepository.ts`.
+- Official Intrinsic Value / Share lives in `valuationResult.official.officialIntrinsicValuePerShare` — not on `companies.valuationResult` mock.
+- Fingerprints: `valuationInputFingerprint`, `marketOverlayFingerprint`, `referenceDataStamp`, `companyDocumentLastUpdated`, `manualInputsRevision`.
+- **Not implemented in Phase A:** worker/cron writes, frontend switch from request-time compute, Admin batch transactions.
+- See `docs/firestore-valuation-schema.md`.
+
+## Phase 4C-2B-19 Coverage (Dashboard Decision Integration)
+- `mapDashboardDecisionIntegrationFromFoundationBundle(company, bundle)` — presentation mapping only.
+- `buildDashboardFoundationPresentationRows(companies, options?)` — one `computeCompanyFoundationBundle` per company, then mapping (Dashboard UI).
+- Outputs: intrinsic, price, MOS %, required MOS, entry price, foundation outcome (`Above Required MOS` | `Below Required MOS` | `N/A`), foundation status.
+- Not implemented: official Buy/Sell/Hold, gateway, hard gate, shadow valuation, Dashboard-side valuation math.
+- Legacy mock decision must remain labeled separately from foundation outcome.
 
 ## Phase 4C-2B-9 Coverage (Beta Engine Foundation)
 - `getBetaReferenceForBenchmark(benchmarkName)` — read-only lookup; does not mutate Damodaran raw data.

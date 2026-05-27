@@ -3,6 +3,7 @@ import "server-only";
 import type { CompanyDataModel } from "@/lib/types/company";
 import type { EquityBridgeInput, EquityBridgeResult } from "@/lib/types/equity-bridge-engine";
 import { computeEquityBridgeFromInput as computeEquityBridgeFromInputMath } from "@/lib/engines/equity-bridge/equityBridgeMath";
+import type { FoundationComputeOptions } from "@/lib/engines/company-foundation/companyFoundationTypes";
 import { computeDcfPvForCompany } from "@/lib/engines/dcf-pv/dcfPvService";
 
 function resolveTotalDebt(bridge: CompanyDataModel["balanceSheetBridgeInputs"]): {
@@ -33,6 +34,7 @@ function resolveTotalDebt(bridge: CompanyDataModel["balanceSheetBridgeInputs"]):
 
 export async function buildEquityBridgeInputForCompany(
   company: CompanyDataModel,
+  options?: FoundationComputeOptions,
 ): Promise<EquityBridgeInput> {
   const selectedBenchmark = company.identity.damodaranIndustrialBenchmark ?? "";
 
@@ -59,7 +61,9 @@ export async function buildEquityBridgeInputForCompany(
     };
   }
 
-  const dcfPvBundle = await computeDcfPvForCompany(company);
+  const dcfPvBundle =
+    options?.upstream?.dcfPvBundle ??
+    (await computeDcfPvForCompany(company, { upstream: options?.upstream }));
   const bridge = company.balanceSheetBridgeInputs;
   const totalDebtResolved = resolveTotalDebt(bridge);
 
@@ -103,11 +107,14 @@ export async function buildEquityBridgeInputForCompany(
   return input;
 }
 
-export async function computeEquityBridgeForCompany(company: CompanyDataModel): Promise<{
+export async function computeEquityBridgeForCompany(
+  company: CompanyDataModel,
+  options?: FoundationComputeOptions,
+): Promise<{
   input: EquityBridgeInput;
   result: EquityBridgeResult;
 }> {
-  const input = await buildEquityBridgeInputForCompany(company);
+  const input = await buildEquityBridgeInputForCompany(company, options);
   const result = computeEquityBridgeFromInputMath(input);
   return { input, result };
 }

@@ -1,16 +1,11 @@
+import { FoundationSourceNotes } from "@/components/foundation-source-notes";
+import { FoundationStatusBadge } from "@/components/foundation-status-badge";
 import type {
   DcfPvInput,
   DcfPvForecastPeriod,
   DcfPvResult,
 } from "@/lib/types/dcf-pv-engine";
 import { formatAmountMillions, formatNumber, formatPercent } from "@/lib/utils/formatters";
-
-function statusBadgeClass(status: string) {
-  if (status === "Ready") return "badge badgeGreen";
-  if (status === "Review") return "badge badgeYellow";
-  if (status === "Not Applicable") return "badge badgeBlue";
-  return "badge badgeRed";
-}
 
 function formatAmount(value: number | null) {
   if (value === null || !Number.isFinite(value)) return "N/A";
@@ -42,13 +37,15 @@ function dedupeNotes(notesA: string[], notesB: string[]) {
 interface DcfPvFoundationCardProps {
   input: DcfPvInput;
   result: DcfPvResult;
+  displayStatus?: string;
 }
 
 function pickForecastPeriod(periods: DcfPvForecastPeriod[]) {
   return periods[0] ?? null;
 }
 
-export function DcfPvFoundationCard({ input, result }: DcfPvFoundationCardProps) {
+export function DcfPvFoundationCard({ input, result, displayStatus }: DcfPvFoundationCardProps) {
+  const statusLabel = displayStatus ?? result.status;
   const forecastPeriod = pickForecastPeriod(result.forecastPeriods);
   const uniqueNotes = dedupeNotes(result.notes, input.sourceNotes);
   const uniqueWarnings = [...new Set(result.warnings)];
@@ -65,7 +62,7 @@ export function DcfPvFoundationCard({ input, result }: DcfPvFoundationCardProps)
         <div>
           <dt>Status</dt>
           <dd>
-            <span className={statusBadgeClass(result.status)}>{result.status}</span>
+            <FoundationStatusBadge displayStatus={statusLabel} />
           </dd>
         </div>
         <div>
@@ -137,16 +134,7 @@ export function DcfPvFoundationCard({ input, result }: DcfPvFoundationCardProps)
         </div>
       ) : null}
 
-      {result.notes.length > 0 || input.sourceNotes.length > 0 ? (
-        <details className="betaReferenceDetails">
-          <summary>Source notes</summary>
-          {uniqueNotes.map((note, idx) => (
-            <p key={`note-${idx}-${note.slice(0, 40)}`} className="cardMeta">
-              {note}
-            </p>
-          ))}
-        </details>
-      ) : null}
+      <FoundationSourceNotes notes={uniqueNotes} />
     </article>
   );
 }

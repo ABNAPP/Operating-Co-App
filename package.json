@@ -7,7 +7,9 @@
     "dev:no-open": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "valuation:batch": "node scripts/run-all-valuations-batch.mjs",
+    "valuation:seed": "node scripts/seed-valuation-result-dev.mjs"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",

@@ -14,6 +14,7 @@ import { getRiskfreeRateByCurrency } from "@/lib/firestore/repositories/referenc
 import { getSelectedRiskfreeRate } from "@/lib/data-hub/rateSelectors";
 import type { CompanyDataModel } from "@/lib/types/company";
 import type { RiskfreeRateRow } from "@/lib/types/reference-data";
+import type { FoundationComputeOptions } from "@/lib/engines/company-foundation/companyFoundationTypes";
 import type {
   CompanyWaccFoundationInputs,
   WaccInput,
@@ -108,8 +109,13 @@ function resolvePreTaxCostOfDebt(
   return { value: null, source: null };
 }
 
-export async function buildWaccInputForCompany(company: CompanyDataModel): Promise<WaccInput> {
-  const { policy } = await computeBetaPolicyForCompany(company);
+export async function buildWaccInputForCompany(
+  company: CompanyDataModel,
+  options?: FoundationComputeOptions,
+): Promise<WaccInput> {
+  const policy =
+    options?.upstream?.betaPolicyBundle?.policy ??
+    (await computeBetaPolicyForCompany(company)).policy;
   const valuationCurrency = company.currencies.valuationCurrency;
   const countryOfRisk = company.identity.countryOfRisk;
 
@@ -180,17 +186,21 @@ export async function buildWaccInputForCompany(company: CompanyDataModel): Promi
 
 export async function computeWaccReadinessForCompany(
   company: CompanyDataModel,
+  options?: FoundationComputeOptions,
 ): Promise<WaccReadinessStatus> {
-  const input = await buildWaccInputForCompany(company);
+  const input = await buildWaccInputForCompany(company, options);
   return computeWaccReadinessFromInput(input);
 }
 
-export async function computeWaccForCompany(company: CompanyDataModel): Promise<{
+export async function computeWaccForCompany(
+  company: CompanyDataModel,
+  options?: FoundationComputeOptions,
+): Promise<{
   input: WaccInput;
   readiness: WaccReadinessStatus;
   result: WaccResult;
 }> {
-  const input = await buildWaccInputForCompany(company);
+  const input = await buildWaccInputForCompany(company, options);
   const readiness = computeWaccReadinessFromInput(input);
   const result = computeWaccFromInput(input);
 

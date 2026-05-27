@@ -267,7 +267,7 @@ export const mockCompanies: CompanyDataModel[] = [
       terminalGrowthRate: 0.024,
       terminalRoiOrRoic: 0.18,
       terminalMargin: 0.4,
-      terminalMethod: "Hybrid",
+      terminalMethod: "Gordon Growth",
     },
     decisionLayerInputs: {
       minimumMOSForApprove: 0.08,
@@ -347,7 +347,7 @@ export const mockCompanies: CompanyDataModel[] = [
         erp: 0.047,
       },
       terminalValueResult: {
-        terminalMethod: "Hybrid",
+        terminalMethod: "Gordon Growth",
         terminalValue: 2510000,
         terminalGrowthRate: 0.024,
         terminalYear: "YEAR_PLUS_10",
@@ -1072,7 +1072,7 @@ export const mockCompanies: CompanyDataModel[] = [
       terminalGrowthRate: 0.02,
       terminalRoiOrRoic: 0.11,
       terminalMargin: 0.1,
-      terminalMethod: "Hybrid",
+      terminalMethod: "Gordon Growth",
     },
     decisionLayerInputs: {
       minimumMOSForApprove: 0.09,
@@ -1148,7 +1148,7 @@ export const mockCompanies: CompanyDataModel[] = [
         erp: 0.0505,
       },
       terminalValueResult: {
-        terminalMethod: "Hybrid",
+        terminalMethod: "Gordon Growth",
         terminalValue: 701000,
         terminalGrowthRate: 0.02,
         terminalYear: "YEAR_PLUS_10",

@@ -1,3 +1,4 @@
+import { FoundationSourceNotes } from "@/components/foundation-source-notes";
 import type { ForecastFadeInput, ForecastFadeResult } from "@/lib/types/forecast-fade-engine";
 import { formatNumber } from "@/lib/utils/formatters";
 
@@ -149,16 +150,7 @@ export function ForecastFadeFoundationCard({ input, result }: ForecastFadeFounda
         </div>
       ) : null}
 
-      {uniqueNotes.length > 0 ? (
-        <details className="betaReferenceDetails">
-          <summary>Notes</summary>
-          {uniqueNotes.map((note, idx) => (
-            <p key={`note-${idx}-${note.slice(0, 40)}`} className="cardMeta">
-              {note}
-            </p>
-          ))}
-        </details>
-      ) : null}
+      <FoundationSourceNotes notes={uniqueNotes} />
     </article>
   );
 }

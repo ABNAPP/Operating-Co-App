@@ -246,5 +246,22 @@ function buildTerminalInputFromCompany(company, { omitChangeInNWC } = {}) {
   assert(result.status === "Missing", `Expected Missing status, got: ${result.status}`);
 }
 
+// 6) Hybrid requested method: Gordon still computed for review, with not-implemented note.
+{
+  const { terminalInput } = buildTerminalInputFromCompany(companies.MSFT, { omitChangeInNWC: false });
+  const hybridInput = {
+    ...terminalInput,
+    terminalMethod: "Hybrid",
+  };
+  const result = computeTerminalValueFromInput(hybridInput);
+
+  assert(result.terminalValue !== null, "Hybrid QA: expected Gordon foundation output for review");
+  assert(result.status === "Review", `Hybrid QA: expected Review, got: ${result.status}`);
+  assert(
+    result.warnings.some((w) => /Hybrid/i.test(w) || /not implemented/i.test(w)),
+    "Hybrid QA: expected not-implemented warning",
+  );
+}
+
 console.log("qa-terminal-value-foundation: all assertions passed");
 

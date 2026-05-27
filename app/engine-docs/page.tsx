@@ -47,7 +47,19 @@ const docCards = [
     href: "/engine-docs/intrinsic-value-engine",
     title: "Intrinsic Value / Share Engine Foundation",
     description:
-      "Intrinsic value per share from Equity Value and selected diluted shares — no MOS, entry price, or dashboard decisions.",
+      "Intrinsic value per share from Equity Value and selected diluted shares — no official Dashboard buy/sell/hold decisions.",
+  },
+  {
+    href: "/engine-docs/mos-decision-engine",
+    title: "MOS / Decision Engine Foundation",
+    description:
+      "MOS %, entry price, and foundation-only Above/Below Required MOS outcome — not an official Dashboard decision; no Buy/Sell/Hold logic.",
+  },
+  {
+    href: "/engine-docs/dashboard-decision-engine",
+    title: "Dashboard Decision Integration",
+    description:
+      "Maps foundation bundle outputs to the Dashboard table — presentation-only; no valuation math or official Buy/Sell/Hold.",
   },
 ];
 

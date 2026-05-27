@@ -296,6 +296,47 @@
 - [x] Valuation Engines status: Intrinsic Value / Share Foundation; MOS / Decision Layer not started
 - [x] No MOS, entry price, buy/sell/hold, or Dashboard decision wiring in this phase
 
+## Phase 4C-2B-18 - MOS / Decision Layer Foundation (Part 2 — UI + Docs)
+- [x] MOS / Decision foundation card on Company Workspace (after Intrinsic Value / Share)
+- [x] `computeCompanyFoundationBundle` extended with `mosDecision` (single bundle per page load)
+- [x] `mosDecisionService` accepts optional upstream intrinsic bundle (no duplicate valuation chain)
+- [x] Engine Docs `/engine-docs/mos-decision-engine`; Engine Docs index updated
+- [x] Valuation Engines status: MOS / Decision Layer = Foundation; Dashboard decision integration = Not started
+- [x] Flowchart/status: MOS / Decision Layer Foundation; Dashboard decision integration not started
+- [x] Foundation-only decision outcome (Above Required MOS / Below Required MOS / N/A) — no Buy/Sell/Hold
+- [x] No official Dashboard decision wiring in this phase
+
+## Phase 4C-2B-21 - Manual Inputs Persistence (Part 1–2A)
+- [x] Part 1: `companyInputs` persistence types, validation, mapping, merge, fingerprint prep (`persistence_only`)
+- [x] Part 2A: Save UI + `POST/GET /api/companies/[cleanTicker]/manual-inputs`; local draft + reload on Inputs tab
+- [x] Valuation tab unchanged: base company + `getCachedCompanyFoundationBundle`; no engine_wired merge
+
+## Phase 4C-2B-23 - Manual Inputs Market Overlay Wiring (Part 2B-2)
+- [x] `market_overlay_wired` save status; `mergeMarketOverlayManualInputs` (current price + required MOS only)
+- [x] Foundation cache: valuation fingerprint from base company; market fingerprint from overlay; STALE MOS-only path
+- [x] MOS / Decision Foundation + Dashboard presentation use overlay; Beta→Intrinsic unchanged
+- [x] `scripts/qa-manual-inputs-market-overlay-wiring.mjs`
+
+## Phase 4C-2B-22 - Manual Inputs Engine Wiring Contract (Part 2B-1)
+- [x] `lib/company-workspace/manualInputsEngineWiringContract.ts` — allowlist per field and engine group
+- [x] All fields `not_wired_yet`; `shouldInvalidateFoundationCacheOnManualInputsSave("persistence_only")` = false
+- [x] Inputs tab wiring contract documentation panel; `scripts/qa-manual-inputs-wiring-contract.mjs`
+- [x] No valuation math, fingerprint, or cache changes in this phase
+
+## Phase 4C-2B-20 - Foundation Bundle Cache (performance)
+- [x] In-memory foundation bundle cache with valuation + market overlay fingerprints
+- [x] `getCachedCompanyFoundationBundle` on Company Workspace and Dashboard (parallel + cache HIT)
+- [x] Market-only STALE path recomputes MOS overlay without full valuation chain
+- [x] Dev bypass: `?refresh=1` or `COMPANY_FOUNDATION_CACHE_DISABLED=1`; logs `[foundation-cache] HIT|MISS|STALE|BYPASS`
+- [x] `scripts/qa-foundation-cache.mjs`; pluggable cache store interface for future Firestore backend
+
+## Phase 4C-2B-19 - Dashboard Decision Integration (Part 1–2)
+- [x] Part 1: `lib/types/dashboard-decision-engine.ts`, `dashboardDecisionMapping.ts`, `dashboardDecisionService.ts`, `scripts/qa-dashboard-decision-integration-foundation.mjs`
+- [x] Part 2: Dashboard UI foundation table on `/` via `buildDashboardFoundationPresentationRows` (one bundle per company)
+- [x] Engine Docs `/engine-docs/dashboard-decision-engine`; Valuation Engines status: Dashboard decision integration = Foundation
+- [x] Legacy mock decision (Approve/Watchlist) shown separately — not official, not mixed with MOS foundation outcome
+- [x] No Buy/Sell/Hold, gateway, hard gate, or shadow valuation; Dashboard does not calculate valuation math
+
 ## Phase 5 - Planned Later
 - [ ] Form UX for company inputs and period editing
 - [ ] Server-side API adapter hardening and observability

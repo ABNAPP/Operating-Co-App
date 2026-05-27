@@ -1,22 +1,11 @@
+import { FoundationSourceNotes } from "@/components/foundation-source-notes";
+import { FoundationStatusBadge } from "@/components/foundation-status-badge";
 import type {
   TerminalValueInput,
   TerminalValueResult,
   TerminalValueMethod,
 } from "@/lib/types/terminal-value-engine";
 import { formatAmountMillions, formatPercent } from "@/lib/utils/formatters";
-
-function statusBadgeClass(status: string) {
-  if (status === "Ready") {
-    return "badge badgeGreen";
-  }
-  if (status === "Review") {
-    return "badge badgeYellow";
-  }
-  if (status === "Not Applicable") {
-    return "badge badgeBlue";
-  }
-  return "badge badgeRed";
-}
 
 function formatAmount(value: number | null) {
   if (value === null || !Number.isFinite(value)) return "not provided";
@@ -46,12 +35,15 @@ function dedupeNotes(notesA: string[], notesB: string[]) {
 interface TerminalValueFoundationCardProps {
   input: TerminalValueInput;
   result: TerminalValueResult;
+  displayStatus?: string;
 }
 
 export function TerminalValueFoundationCard({
   input,
   result,
+  displayStatus,
 }: TerminalValueFoundationCardProps) {
+  const statusLabel = displayStatus ?? result.status;
   const requestedMethod = input.terminalMethod;
   const isRequestedNotImplemented =
     requestedMethod !== null && requestedMethod !== "Gordon Growth";
@@ -65,6 +57,14 @@ export function TerminalValueFoundationCard({
         Terminal Value Foundation calculates terminal FCFF and Gordon terminal value
         only. It does not calculate DCF/PV, firm-to-equity bridge, intrinsic value or
         dashboard decisions.
+      </p>
+      <p className="cardMeta">
+        Terminal FCFF and Gordon terminal value are foundation approximations only — not
+        official valuation outputs.
+      </p>
+      <p className="cardMeta">
+        Stable reinvestment and stable ROC terminal discipline are not fully implemented in
+        this phase.
       </p>
 
       {isRequestedNotImplemented ? (
@@ -81,7 +81,7 @@ export function TerminalValueFoundationCard({
         <div>
           <dt>Status</dt>
           <dd>
-            <span className={statusBadgeClass(result.status)}>{result.status}</span>
+            <FoundationStatusBadge displayStatus={statusLabel} />
           </dd>
         </div>
         <div>
@@ -149,16 +149,7 @@ export function TerminalValueFoundationCard({
         </div>
       ) : null}
 
-      {uniqueNotes.length > 0 ? (
-        <details className="betaReferenceDetails">
-          <summary>Source notes</summary>
-          {uniqueNotes.map((note, idx) => (
-            <p key={`note-${idx}-${note.slice(0, 40)}`} className="cardMeta">
-              {note}
-            </p>
-          ))}
-        </details>
-      ) : null}
+      <FoundationSourceNotes notes={uniqueNotes} />
     </article>
   );
 }

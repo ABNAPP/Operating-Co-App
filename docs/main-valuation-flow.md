@@ -139,13 +139,32 @@ Input -> Reference Data -> Global Valuation Engine -> Company Valuation Engine R
   - Total Debt uses gross debt plus lease liabilities (not net debt); ISM-sector is display-only
 - Phase 4C-2B-17 adds Intrinsic Value / Share Engine Foundation:
   - Equity Value (bridge) ÷ selected diluted shares (explicit share unit) → Intrinsic Value / Share
-  - per-share foundation output only — no MOS, entry price, buy/sell/hold, or Dashboard decision logic
+  - per-share foundation output only — no official Dashboard buy/sell/hold decision logic
   - current share price is display-only context when available; ISM-sector is display-only
+- Phase 4C-2B-18 adds MOS / Decision Layer Foundation:
+  - Intrinsic Value / Share + current share price → upside/downside %, MOS %, entry price, foundation decision outcome
+  - foundation-only Above Required MOS / Below Required MOS / N/A — not an official Dashboard decision
+  - no Buy/Sell/Hold logic; official Dashboard buy/sell/hold remains not started
+  - computed once via `computeCompanyFoundationBundle` on Company Workspace; ISM-sector is display-only
+- Phase 4C-2B-19 adds Dashboard Decision Integration (foundation presentation):
+  - maps foundation bundle (Intrinsic + MOS) to Dashboard table on `/` — one bundle per company
+  - legacy mock decision shown separately when needed; not official investment decision
+  - Dashboard does not run valuation formulas; no gateway/hard gate/shadow valuation
 - Phase 4C-2B-9 adds Beta Engine Foundation (reference lookup only):
   - Selected Damodaran Industrial Benchmark → `betaTableKey` → `damodaran_beta_global` → Beta Reference display
   - Company Workspace and `/engine-docs/beta-engine` show readiness and source metadata
   - no Cost of Equity, WACC, relevering, FCFF, terminal, bridge, or intrinsic math
   - ISM-sector is not used for beta lookup
+
+- Phase 4C-2B-23 adds Manual Inputs **market overlay wiring** (Part 2B-2):
+  - Saved **current share price** and **required MOS** (`minimumMOSForApprove`) wire to MOS / Decision Foundation + Dashboard presentation only
+  - Valuation foundation cache (Beta → Intrinsic) uses base company; STALE recomputes MOS overlay only when price/MOS change
+  - Other saved manual inputs remain display-only on Inputs tab until full `engine_wired`
+- Phase 4C-2B-21–22 adds Manual Inputs persistence and engine wiring contract:
+  - Company Workspace Inputs tab: save/load manual input overrides to `companyInputs` (`persistence_only`)
+  - Saved inputs reload on Inputs tab only; **Valuation Engines tab still uses base company** + `getCachedCompanyFoundationBundle`
+  - `manualInputsEngineWiringContract` documents per-field future allowlist; all fields `not_wired_yet` in Part 2B-1
+  - No foundation cache invalidation on save; no Buy/Sell/Hold or official Dashboard decision from manual inputs
 
 ## Phase 4A Correction Notes
 - Riskfree selection is now explicitly tied to valuation currency mapping.

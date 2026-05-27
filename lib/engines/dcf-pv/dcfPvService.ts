@@ -3,6 +3,7 @@ import "server-only";
 import type { CompanyDataModel } from "@/lib/types/company";
 import type { DcfPvInput, DcfPvResult, DcfPvForecastPeriodSeed } from "@/lib/types/dcf-pv-engine";
 import { computeDcfPvFromInput as computeDcfPvFromInputMath } from "@/lib/engines/dcf-pv/dcfPvMath";
+import type { FoundationComputeOptions } from "@/lib/engines/company-foundation/companyFoundationTypes";
 import { computeReinvestmentFcffForCompany } from "@/lib/engines/reinvestment-fcff/reinvestmentFcffService";
 import { computeTerminalValueForCompany } from "@/lib/engines/terminal-value/terminalValueService";
 import { computeWaccForCompany } from "@/lib/engines/wacc/waccService";
@@ -15,7 +16,10 @@ function forecastYearToYearNumber(forecastYear: string): number | null {
   return n;
 }
 
-export async function buildDcfPvInputForCompany(company: CompanyDataModel): Promise<DcfPvInput> {
+export async function buildDcfPvInputForCompany(
+  company: CompanyDataModel,
+  options?: FoundationComputeOptions,
+): Promise<DcfPvInput> {
   const selectedBenchmark = company.identity.damodaranIndustrialBenchmark ?? "";
   const forecastScaffoldNotes = [
     "DCF/PV foundation calculates discounting only (PV of forecast FCFF + PV of terminal value).",
@@ -39,11 +43,22 @@ export async function buildDcfPvInputForCompany(company: CompanyDataModel): Prom
     };
   }
 
-  const [reinvestmentFcffBundle, terminalValueBundle, waccBundle] = await Promise.all([
-    computeReinvestmentFcffForCompany(company),
-    computeTerminalValueForCompany(company),
-    computeWaccForCompany(company),
-  ]);
+  const upstream = options?.upstream;
+  const reinvestmentFcffBundle =
+    upstream?.reinvestmentFcffBundle ?? (await computeReinvestmentFcffForCompany(company));
+  const waccBundle =
+    upstream?.waccBundle ??
+    (await computeWaccForCompany(company, { upstream: { betaPolicyBundle: upstream?.betaPolicyBundle } }));
+  const terminalValueBundle =
+    upstream?.terminalValueBundle ??
+    (await computeTerminalValueForCompany(company, {
+      upstream: {
+        forecastFadeBundle: upstream?.forecastFadeBundle,
+        waccBundle,
+        reinvestmentFcffBundle,
+        betaPolicyBundle: upstream?.betaPolicyBundle,
+      },
+    }));
 
   const reinvestmentInput = reinvestmentFcffBundle.input;
   const reinvestmentResult = reinvestmentFcffBundle.result;
@@ -81,11 +96,14 @@ export async function buildDcfPvInputForCompany(company: CompanyDataModel): Prom
   };
 }
 
-export async function computeDcfPvForCompany(company: CompanyDataModel): Promise<{
+export async function computeDcfPvForCompany(
+  company: CompanyDataModel,
+  options?: FoundationComputeOptions,
+): Promise<{
   input: DcfPvInput;
   result: DcfPvResult;
 }> {
-  const input = await buildDcfPvInputForCompany(company);
+  const input = await buildDcfPvInputForCompany(company, options);
   const result = computeDcfPvFromInputMath(input);
   return { input, result };
 }

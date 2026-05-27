@@ -1,18 +1,7 @@
+import { FoundationSourceNotes } from "@/components/foundation-source-notes";
+import { FoundationStatusBadge } from "@/components/foundation-status-badge";
 import type { WaccInput, WaccReadinessStatus, WaccResult } from "@/lib/types/wacc-engine";
 import { formatNumber, formatPercent } from "@/lib/utils/formatters";
-
-function statusBadgeClass(status: string) {
-  if (status === "Ready") {
-    return "badge badgeGreen";
-  }
-  if (status === "Review") {
-    return "badge badgeYellow";
-  }
-  if (status === "Not Applicable") {
-    return "badge badgeBlue";
-  }
-  return "badge badgeRed";
-}
 
 function formatBeta(value: number | null) {
   return value === null ? "—" : formatNumber(value, { decimals: 2 });
@@ -43,6 +32,7 @@ interface WaccFoundationCardProps {
   input: WaccInput;
   readiness: WaccReadinessStatus;
   result: WaccResult;
+  displayStatus?: string;
   showMockScaffoldNote?: boolean;
 }
 
@@ -50,14 +40,22 @@ export function WaccFoundationCard({
   input,
   readiness,
   result,
+  displayStatus,
   showMockScaffoldNote,
 }: WaccFoundationCardProps) {
+  const statusLabel = displayStatus ?? result.status;
   const capitalStructureLabel =
     input.selectedDebtToEquity !== null
       ? formatDebtToEquityRatio(input.selectedDebtToEquity)
       : input.selectedDebtWeight !== null && input.selectedEquityWeight !== null
         ? `Weights — Debt: ${formatWeight(input.selectedDebtWeight)}, Equity: ${formatWeight(input.selectedEquityWeight)}`
         : "not provided";
+
+  const waccSourceNotes = [
+    ...Object.entries(result.sourceSummary).map(([key, value]) => `${key}: ${value}`),
+    ...result.notes,
+    ...input.notes,
+  ];
 
   return (
     <article className="card">
@@ -74,7 +72,7 @@ export function WaccFoundationCard({
         <div>
           <dt>Status</dt>
           <dd>
-            <span className={statusBadgeClass(result.status)}>{result.status}</span>
+            <FoundationStatusBadge displayStatus={statusLabel} />
           </dd>
         </div>
         <div>
@@ -181,21 +179,7 @@ export function WaccFoundationCard({
         </div>
       ) : null}
 
-      {Object.keys(result.sourceSummary).length > 0 || result.notes.length > 0 ? (
-        <details className="betaReferenceDetails">
-          <summary>Source notes</summary>
-          {Object.entries(result.sourceSummary).map(([key, value]) => (
-            <p key={key} className="cardMeta">
-              {key}: {value}
-            </p>
-          ))}
-          {result.notes.map((note) => (
-            <p key={note} className="cardMeta">
-              {note}
-            </p>
-          ))}
-        </details>
-      ) : null}
+      <FoundationSourceNotes notes={waccSourceNotes} />
     </article>
   );
 }

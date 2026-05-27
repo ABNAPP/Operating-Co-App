@@ -44,10 +44,10 @@ export default async function CompaniesPage() {
                 ?.ismSectorDisplay ?? company.identity.ismSector}{" "}
               (display-only)
             </p>
+            <p className="cardMeta">Dashboard decision integration: Foundation (see Dashboard)</p>
             <p className="cardMeta">
-              Decision: {company.valuationResult.decisionResult.decisionStatus}
+              Mock review severity: {company.reviewSummary.worstSeverity} (legacy scaffold)
             </p>
-            <p className="cardMeta">Review: {company.reviewSummary.worstSeverity}</p>
             <p className="cardMeta">Last Updated: {company.lastUpdated}</p>
           </Link>
         ))}

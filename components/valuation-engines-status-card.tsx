@@ -8,16 +8,16 @@ export function ValuationEnginesStatusCard() {
     { name: "DCF / PV Engine", status: "Foundation" },
     { name: "Firm-to-Equity Bridge", status: "Foundation" },
     { name: "Intrinsic Value / Share", status: "Foundation" },
-    { name: "MOS / Decision Layer", status: "Not started" },
+    { name: "MOS / Decision Layer", status: "Foundation" },
+    { name: "Dashboard decision integration", status: "Foundation" },
   ] as const;
 
   return (
     <article className="card">
       <h3 className="cardTitle">Valuation Engines — Build Status</h3>
       <p className="cardMeta">
-        Beta through Intrinsic Value / Share foundations provide engine outputs or
-        structure/readiness — not connected to MOS, entry price, buy/sell/hold, or Dashboard
-        decision logic.
+        Beta through Dashboard Decision Integration foundations provide engine outputs or mapped
+        presentation — not connected to official Buy/Sell/Hold decision logic.
       </p>
       <ul className="flowchartRulesList">
         {engineRows.map((row) => (

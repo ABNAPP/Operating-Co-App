@@ -338,8 +338,23 @@ Company Workspace is the per-company shell at `/companies/[cleanTicker]` (not a 
 - `lib/engines/intrinsic-value/intrinsicValueMath.ts` and `lib/engines/intrinsic-value/intrinsicValueService.ts`; types in `lib/types/intrinsic-value-engine.ts`.
 - Company Workspace Intrinsic Value / Share Foundation card; Engine Docs at `/engine-docs/intrinsic-value-engine`.
 - Share unit must be explicitly `millions` or `absolute` — no silent unit guessing.
-- Does not calculate MOS, entry price, buy/sell/hold, upside/downside, or Dashboard decisions.
+- Does not calculate official Dashboard buy/sell/hold decisions.
 - ISM-sector is display-only and must not drive intrinsic value logic.
+
+## Phase 4C-2B-19 Additions (Dashboard Decision Integration)
+- Dashboard maps `CompanyFoundationBundle` to presentation rows via `dashboardDecisionMapping` / `dashboardDecisionService`.
+- Dashboard UI (`/`) shows foundation intrinsic/MOS/entry/outcome columns — does not calculate valuation math.
+- Legacy mock decision (Approve/Watchlist) remains separate scaffold display — not official and not MOS foundation.
+- Official Buy/Sell/Hold decision logic remains not started.
+
+## Phase 4C-2B-18 Additions (MOS / Decision Layer Foundation — UI + Docs)
+- MOS / Decision foundation calculates upside/downside %, MOS %, entry price, and foundation-only Above/Below Required MOS outcome.
+- `lib/engines/mos-decision/mosDecisionMath.ts` and `lib/engines/mos-decision/mosDecisionService.ts`; types in `lib/types/mos-decision-engine.ts`.
+- Company Workspace MOS / Decision Foundation card (via `computeCompanyFoundationBundle` — one bundle per request).
+- Engine Docs at `/engine-docs/mos-decision-engine`.
+- MOS / Decision Foundation is not an official Dashboard decision; no Buy/Sell/Hold logic in this phase.
+- Dashboard decision integration remains not started.
+- ISM-sector is display-only and must not drive MOS / decision logic.
 
 ## Phase 4C-2B-9 Additions (Beta Engine Foundation)
 - Beta Engine foundation is read-only reference lookup — not a valuation engine.
